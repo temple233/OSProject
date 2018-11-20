@@ -7,7 +7,7 @@ BOOL sd_read_block(unsigned char *p, unsigned long SectorStart, unsigned long Se
 	unsigned long nBytes;
 	//char Drive[] = "\\\\.\\USBSTOR\\DISK&VEN_MASS&PROD_STORAGE_DEVICE&REV__\125D20140310&0";
 	BOOL result = FALSE;
-	HANDLE hDeviceHandle = CreateFileW(TEXT("\\\\.\\PhysicalDrive2"), 
+	HANDLE hDeviceHandle = CreateFile(TEXT("\\\\.\\PhysicalDrive2"),
 									  GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 
 									  NULL, OPEN_EXISTING, 0, NULL);
 	if(hDeviceHandle != INVALID_HANDLE_VALUE)

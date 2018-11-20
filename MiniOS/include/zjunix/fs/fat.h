@@ -1,8 +1,8 @@
 #ifndef _ZJUNIX_FS_FAT_H
 #define _ZJUNIX_FS_FAT_H
 
-#include <zjunix/type.h>
-#include <zjunix/fs/fscache.h>
+#include "../type.h"
+#include "fscache.h"
 
 /* 4k data buffer number in each file struct */
 #define LOCAL_DATA_BUF_NUM 4
@@ -10,7 +10,7 @@
 #define SECTOR_SIZE 512
 #define CLUSTER_SIZE 4096
 
-
+// #pragma pack(push, 1)
 struct __attribute__((__packed__)) dir_entry_attr {
     u8 name[8];                   /* Name */
     u8 ext[3];                    /* Extension */
@@ -26,6 +26,7 @@ struct __attribute__((__packed__)) dir_entry_attr {
     u16 startlow;                 /* Start cluster (Low 16 bits) */
     u32 size;                     /* file size (in bytes) */
 };
+// #pragma pack(pop)
 
 union dir_entry {
     u8 data[32];
@@ -46,7 +47,7 @@ typedef struct fat_file {
     unsigned long clock_head;
     /* For normal FAT32, cluster size is 4k */
     BUF_4K data_buf[LOCAL_DATA_BUF_NUM];
-} FILE;
+} _FILE_;
 
 typedef struct fs_fat_dir {
     unsigned long cur_sector;
@@ -108,21 +109,21 @@ struct fs_info {
     u8 fat_fs_info[SECTOR_SIZE];
 };
 
-unsigned long fs_find(FILE *file);
+unsigned long fs_find(_FILE_ *file);
 
 unsigned long init_fs();
 
-unsigned long fs_open(FILE *file, unsigned char *filename);
+unsigned long fs_open(_FILE_ *file, unsigned char *filename);
 
-unsigned long fs_close(FILE *file);
+unsigned long fs_close(_FILE_ *file);
 
-unsigned long fs_read(FILE *file, unsigned char *buf, unsigned long count);
+unsigned long fs_read(_FILE_ *file, unsigned char *buf, unsigned long count);
 
-unsigned long fs_write(FILE *file, const unsigned char *buf, unsigned long count);
+unsigned long fs_write(_FILE_ *file, const unsigned char *buf, unsigned long count);
 
 unsigned long fs_fflush();
 
-void fs_lseek(FILE *file, unsigned long new_loc);
+void fs_lseek(_FILE_ *file, unsigned long new_loc);
 
 unsigned long fs_create(unsigned char *filename);
 

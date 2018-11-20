@@ -1,7 +1,7 @@
 #ifndef _ZJUNIX_FSCACHE_H
 #define _ZJUNIX_FSCACHE_H
 
-#include <zjunix/type.h>
+#include "../type.h"
 
 /* 4k byte buffer */
 typedef struct buf_4k {

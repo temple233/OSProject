@@ -1,9 +1,9 @@
 #ifndef _ZJUNIX_VFS_VFS_H
 #define _ZJUNIX_VFS_VFS_H
 
-#include <zjunix/type.h>
-#include <zjunix/list.h>
-#include <zjunix/vfs/err.h>
+#include "../type.h"
+#include "../list.h"
+#include "err.h"
 
 #define DPT_MAX_ENTRY_COUNT                     4
 #define DPT_ENTRY_LEN                           16

@@ -1,7 +1,7 @@
 #ifndef _ZJUNIX_VFS_ERR_H
 #define _ZJUNIX_VFS_ERR_H
 
-#include <zjunix/vfs/errno.h>
+#include "errno.h"
 
 #define MAX_ERRNO	4095
 #define IS_ERR_VALUE(x) ((x) >= (u32)-MAX_ERRNO)
