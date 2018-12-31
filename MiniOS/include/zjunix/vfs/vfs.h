@@ -97,7 +97,7 @@ struct vfsmount {
 struct address_space {
     u32                                 a_pagesize;             // 页大小(字节)
     u32                                 *a_page;                // 文件页到逻辑页的映射表
-    struct inode                        *a_host;                // 相关联的inode
+    struct inode                        *a_inode;                // 相关联的inode
     struct list_head                    a_cache;                // 已缓冲的页链表
     struct address_space_operations     *a_op;                  // 操作函数
 };
@@ -116,7 +116,7 @@ struct inode {
     struct inode_operations             *i_op;                  // 操作函数
     struct file_operations              *i_fop;                 // 对应的文件操作函数
     struct super_block                  *i_sb;                  // 指向超级块对象的指针
-    struct address_space                i_data;                 // 文件的地址空间对象
+    struct address_space                i_addr;                 // 文件的地址空间对象
 };
 
 // 字符串包装
