@@ -1,6 +1,6 @@
-// #include <driver/vga.h>
-#include "utils.h"
-/*
+#include <driver/vga.h>
+#include <zjunix/utils.h>
+
 void* kernel_memcpy(void* dest, void* src, int len) {
     char* deststr = dest;
     char* srcstr = src;
@@ -94,4 +94,3 @@ void kernel_serial_putc(char c) {
 unsigned int is_bound(unsigned int val, unsigned int bound) {
     return !(val & (bound - 1));
 }
-*/

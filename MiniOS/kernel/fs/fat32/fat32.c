@@ -1,6 +1,6 @@
 #include "fat32.h"
 #include "utils.h"
-// #include "../../../include/driver/sd.h"
+#include "../../../include/driver/sd.h"
 // for debug
 #include "Win32DiskDriver.h"
 #include <stdio.h>

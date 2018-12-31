@@ -203,21 +203,21 @@ struct super_operations {
 // 打开的文件的操作函数
 struct file_operations {
     // 从文件的*offset处开始读出count个字节，然后增加*offset的值（一般与文件指针对应）
-    u32 (*read) (struct file *, u8 *, u32, u32 *);
+    u32 (*read)(struct file *, u8 *, u32, u32 *);
     // 从文件的*offset处开始写入count个字节，然后增加*offset的值（一般与文件指针对应）
-    u32 (*write) (struct file *, u8 *, u32, u32 *);
+    u32 (*write)(struct file *, u8 *, u32, u32 *);
     // 通过创建一个新的文件对象而打开一个文件，并把它链接到相应的索引节点对象
-    u32 (*flush) (struct file *);
+    u32 (*flush)(struct file *);
     // 读取一个目录的目录项并放入第二个参数中
-    u32 (*readdir) (struct file *, struct getdent *);
+    u32 (*readdir)(struct file *, struct getdent *);
 };
 
 // 文件节点的操作函数
 struct inode_operations {
     // 在某一目录下，为与目录项相关的普通文件创建一个新的磁盘索引节点
-    u32 (*create) (struct inode *,struct dentry *, u32, struct nameidata *);
+    u32 (*create)(struct inode *,struct dentry *, u32, struct nameidata *);
     // 为包含在一个目录项对象中的文件名对应的索引节点查找目录
-    struct dentry * (*lookup) (struct inode *,struct dentry *, struct nameidata *);
+    struct dentry *(*lookup)(struct inode *,struct dentry *, struct nameidata *);
 };
 
 // 已缓存的页的操作函数
@@ -242,16 +242,16 @@ u32 init_vfs();
 u32 vfs_read_MBR();
 
 // open.c
-struct file * vfs_open(const u8 *, u32, u32);
+struct file *vfs_open(const u8 *, u32, u32);
 u32 open_namei(const u8 *, u32, u32, struct nameidata *);
 u32 path_lookup(const u8 *, u32 , struct nameidata *);
 u32 link_path_walk(const u8 *, struct nameidata *);
 void follow_dotdot(struct vfsmount **, struct dentry **);
 u32 do_lookup(struct nameidata *, struct qstr *, struct path *);
-struct dentry * real_lookup(struct dentry *, struct qstr *, struct nameidata *);
-struct dentry * __lookup_hash(struct qstr *, struct dentry *, struct nameidata *);
-struct dentry * d_alloc(struct dentry *, const struct qstr *);
-struct file * dentry_open(struct dentry *, struct vfsmount *, u32);
+struct dentry *real_lookup(struct dentry *, struct qstr *, struct nameidata *);
+struct dentry *__lookup_hash(struct qstr *, struct dentry *, struct nameidata *);
+struct dentry *d_alloc(struct dentry *, const struct qstr *);
+struct file *dentry_open(struct dentry *, struct vfsmount *, u32);
 u32 vfs_close(struct file *);
 
 // read_write.c
@@ -264,7 +264,7 @@ u32 generic_file_flush(struct file *);
 // mount.c
 u32 mount_ext2();
 u32 follow_mount(struct vfsmount **, struct dentry **);
-struct vfsmount * lookup_mnt(struct vfsmount *, struct dentry *);
+struct vfsmount *lookup_mnt(struct vfsmount *, struct dentry *);
 
 // utils.c
 u16 get_u16(u8 *);

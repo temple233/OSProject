@@ -1,11 +1,11 @@
 #include <assert.h>
-#include "../../../include/zjunix/log.h"
-#include "../../../include/zjunix/time.h"
+#include <zjunix/log.h>
+#include <zjunix/time.h>
 
 #define MAX_LEVEL 4
 #define MIN_LEVEL 0
 static int log_level = 0;
-/*
+
 int gstep = 0;
 
 void log_level_adv() {
@@ -62,4 +62,3 @@ void step() {
 void step_reset() {
     gstep = 0;
 }
-*/
