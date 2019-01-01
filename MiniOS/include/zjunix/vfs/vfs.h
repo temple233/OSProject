@@ -96,6 +96,9 @@ struct vfsmount {
 // 已缓存的页
 struct address_space {
     u32                                 a_pagesize;             // 页大小(字节)
+    
+    // size/length == inode.i_blocks
+    // u32 for a pointer address
     u32                                 *a_page;                // 文件页到逻辑页的映射表
     struct inode                        *a_inode;                // 相关联的inode
     struct list_head                    a_cache;                // 已缓冲的页链表

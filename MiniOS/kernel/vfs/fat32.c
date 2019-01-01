@@ -1,7 +1,7 @@
 #include <zjunix/vfs/vfs.h>
 #include <zjunix/vfs/vfscache.h>
 #include <zjunix/vfs/fat32.h>
-#include "../../include/zjunix/vfs/vfs.h"
+#include <zjunix/vfs/vfs.h>
 
 #include <zjunix/log.h>
 #include <zjunix/slab.h>
@@ -17,8 +17,6 @@ extern struct vfsmount                  * pwd_mnt;
 extern struct cache                     * dcache;                   // vfscache.c
 extern struct cache                     * pcache;
 extern struct cache                     * icache;
-
-struct vfs_page * tempp;
 
 // VFS的接口函数
 struct super_operations fat32_super_operations = {
@@ -190,16 +188,99 @@ u32 init_fat32(u32 base)
     // make sure
     // how many blocks(cluster in FAT32) for root directory
     int block_count = 0;
-    u32 next_clu = far32_bi->fa_DBR->root_clu;
+    u32 next_clu = fat32_bi->fa_DBR->root_clu;
     while(next_clu != 0x0fffffff) {
         block_count++;
-        next_clu = read_fat()
+        next_clu = read_fat(root_inode, next_clu);
     }
+    root->inode->i_blocks = block_count;
+
+    // root_inode i_addr.a_page
+    // file -> logical virtual page
+    root_inode->i_addr.a_page = (u32 *)kmalloc(root_inode->i_blocks * sizeof(u32));
+
+    next_clu = fat32_bi->fa_DBR->root_clu;
+    for(unsigned i = 0; i < root_inode.i_blocks; i++) {
+        root_inode->i_addr.a_page[i] = next_clu;
+        next_clu = read_fat(root_inode, next_clu);
+    }
+
+    // pre read root page
+    for (unsigned i = 0; i < root_inode->i_blocks; i++){
+        struct vfs_page *cur_page = (struct vfs_page *)kmalloc( sizeof(struct vfs_page) );
+
+        cur_page->p_state = P_CLEAR;
+        cur_page->p_location = root_inode->i_addr.a_page[i];
+        cur_page->p_mapping = &(root_inode->i_addr);
+        // hash
+        INIT_LIST_HEAD(&(cur_page->p_hash));
+        // LRU
+        INIT_LIST_HEAD(&(cur_page->p_LRU));
+        // p
+        INIT_LIST_HEAD(&(cur_page->p_list));
+        
+        // p_data read
+        cur_page->p_mapping->a_op->readpage(cur_page);
+
+        // cur_page build over
+
+        pcache->c_op->add(pcache, (void*)cur_page);
+
+        // also add into root_inode->i_addr.a_cache
+        // in a inode
+        list_add(&(cur_page->p_list), &(cur_page->p_mapping->a_cache));
+    }
+
+    // flobal extern variable
+    root_mnt = (struct vfsmount *)kmalloc(sizeof(struct vfsmount));
+    *root_mnt = {
+        // parent file system
+        .mnt_parent = root_mnt,
+        // point dir
+        .mnt_mountpoint = root_dentry,
+        // root dir
+        .mnt_root = root_dentry,
+        // my super block
+        .mnt_sb = fat32_sb
+    };
+    // mnt_hash
+    INIT_LIST_HEAD(&(root_mnt->mnt_hash));
+
+    pwd_mnt = root_mnt;
+
+    return 0;
 }   
 
 // 下面是为fat32专门实现的 super_operations
 // 删除内存中的VFS索引节点和磁盘上文件数据及元数据
 u32 fat32_delete_inode(struct dentry *dentry)
+{
+    // remove from parent directory
+    struct inode *parent_inode = dentry->d_parent->d_inode;
+    struct address_space *p_mapping = &(parent_inode->i_addr);
+    for(unsigned i = 0; i < parent_inode->i_blocks; i++) {
+        u32 page_number = p_mapping->a_op->bmap(parent_inode, i);
+        struct condition cond;
+        cond.cond1 = (void *)(&page_number);
+        cond.cond2 = (void *)(parent_inode);
+        struct vfs_page *page = (struct vfs_page *)pcache->c_op->look_up(pcache, &cond);
+        if(page == NULL) {
+            cur_page = (struct vfs_page *) kmalloc ( sizeof(struct vfs_page) );
+
+            cur_page->p_state    = P_CLEAR;
+            cur_page->p_location = page_number;
+            cur_page->p_mapping  = p_mapping;
+            INIT_LIST_HEAD(&(cur_page->p_hash));
+            INIT_LIST_HEAD(&(cur_page->p_LRU));
+            INIT_LIST_HEAD(&(cur_page->p_list));
+
+            err = mapping->a_op->readpage(cur_page);
+            if ( IS_ERR_VALUE(err) ){
+                release_page(cur_page);
+                return 0;            
+        }
+    }
+}
 
 // 用通过传递参数指定的索引节点对象的内容更新一个文件系统的索引节点
 u32 fat32_write_inode(struct inode * inode, struct dentry * parent)
@@ -225,8 +306,11 @@ u32 fat32_readpage(struct vfs_page *page)
 // 把一页写回外存
 u32 fat32_writepage(struct vfs_page *page)
 
-// 根据由相对文件页号得到相对物理页号
-u32 fat32_bmap(struct inode* inode, u32 pageNo)
+// page number of a file => cluster ID
+u32 fat32_bmap(struct inode* file_inode, u32 page_number)
+{
+    return file_inode->i_addr.a_page[page_number];
+}
 
 // 读文件分配表
 u32 read_fat(struct inode* inode, u32 index)
@@ -242,10 +326,10 @@ u32 read_fat(struct inode* inode, u32 index)
     // FAT cluster count from 0, 1, 2, ...
     u32 dest_sect = base_sect + ( index >> shift );
     
-    // 
-    u8 dest_index = index & (( 1u << shift ) - 1u );
+    u32 dest_offset = index % (1u << shift);
+    //u32 dest_index = index & (( 1u << shift ) - 1u );
 
     // 读扇区并取相应的项
     read_block(buffer, dest_sect, 1);
-    return get_u32(buffer + (dest_index << FAT32_FAT_ENTRY_LEN_SHIFT));
+    return get_u32(buffer + (dest_offset << FAT32_FAT_ENTRY_LEN_SHIFT));
 }
