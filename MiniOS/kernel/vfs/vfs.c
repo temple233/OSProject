@@ -11,7 +11,7 @@
 // 公用全局变量
 struct master_boot_record   * MBR;
 /**
- * root_dentry is refenced in mount.c
+ * root_dentry is referenced in mount.c
  */
 struct dentry               * root_dentry;
 /**

@@ -259,9 +259,10 @@ u32 init_fat32(u32 base)
 }   
 
 /**
- * read its parent all dentrier into RAM
+ * read its parent all dentries into RAM
  * compare and delete
- * write back block/cluster contanined this dentry
+ * write back block/cluster/page contanined this dentry
+ * now it has been set 0xe5
  * no changed FAT table
  */
 u32 fat32_delete_inode(struct dentry *dentry)
@@ -345,7 +346,13 @@ u32 fat32_delete_inode(struct dentry *dentry)
     return 0;
 }
 
-// 用通过传递参数指定的索引节点对象的内容更新一个文件系统的索引节点
+/**
+ * read parent all dentries into RAM
+ * get first dentry related ti this inode
+ * update this dentry -> file size
+ * write back block/cluster/page
+ * no change FAT tabel
+ */
 u32 fat32_write_inode(struct inode *inode, struct dentry *parent)
 {
     u8 name[MAX_FAT32_SHORT_FILE_NAME_LEN];
@@ -370,21 +377,17 @@ u32 fat32_write_inode(struct inode *inode, struct dentry *parent)
     mapping     = &(dir->i_data);
     pagesize    = dir->i_blksize;
     
-    struct dentry *dentry_for_this_inode = container_of(inode->i_dentry.next, struct dentry, d_alias);
+    struct dentry *dentry_of_this_inode = container_of(inode->i_dentry.next, struct dentry, d_alias);
 
-    // 对目录关联的每一页
+    // every page of this parent dentry
     for ( i = 0; i < dir->i_blocks; i++){
         curPageNo = mapping->a_op->bmap(dir, i);
-        // 首先在页高速缓存中寻找
         cond.cond1 = (void*)(&curPageNo);
         cond.cond2 = (void*)(dir);
         curPage = (struct vfs_page *)pcache->c_op->look_up(pcache, &cond);
 
-        
-        // 如果页高速缓存中没有，则需要在外存中寻找（一定能够找到，因为不是创建文件）
-        if ( curPage == 0 ){
-            // kernel_printf("dcache not found!\n");
-            curPage = (struct vfs_page *) kmalloc ( sizeof(struct vfs_page) );
+        if (curPage == NULL){
+            curPage = (struct vfs_page *)kmalloc(sizeof(struct vfs_page));
             if (!curPage)
                 return -ENOMEM;
 
@@ -406,23 +409,28 @@ u32 fat32_write_inode(struct inode *inode, struct dentry *parent)
             list_add(&(curPage->p_list), &(mapping->a_cache));
         }
 
-        //现在p_data指向的数据就是页的数据。假定页里面的都是fat32短文件目录项。对每一个目录项        
+        // parse every page
+        // FAT32 every cluster
         for ( begin = 0; begin < pagesize; begin += FAT32_DIR_ENTRY_LEN ){
             fat_dir_entry = (struct fat_dir_entry *)(curPage->p_data + begin);
 
-            // 先判断是不是短文件名，如果不是的话跳过（08 卷标、0F长文件名）
-            if (fat_dir_entry->attr == 0x08 || fat_dir_entry->attr == 0x0F)
-                continue;
-            
-            // 再判断是不是已删除的文件，是的话跳过
-            if (fat_dir_entry->name[0] == 0xE5)
+            /**
+             * 00000000 read/write
+             * 00000001 read
+             * 00000010 hide
+             * 00000100 system
+             * 00001000 volumn
+             * 00010000 sub dir
+             * 00100000 archive
+             */
+            if (fat_dir_entry->attr == 0x08 || fat_dir_entry->attr == 0x0f ||
+                fat_dir_entry->name[0] == 0xe5)
                 continue;
 
-            // 再判断是不是没有目录项了
-            if (fat_dir_entry->name[0] == '\0')
+            // has no other dentry
+            if (fat_dir_entry->name[0] == '\000')
                 break;
             
-            // 有目录项的话，提取其名字
             kernel_memset( name, 0, MAX_FAT32_SHORT_FILE_NAME_LEN * sizeof(u8) );
             for ( j = 0; j < MAX_FAT32_SHORT_FILE_NAME_LEN; j++ )
                 name[j] = fat_dir_entry->name[j];
@@ -430,18 +438,16 @@ u32 fat32_write_inode(struct inode *inode, struct dentry *parent)
             qstr.name = name;
             qstr.len = MAX_FAT32_SHORT_FILE_NAME_LEN;
 
-            // 转换名字
             fat32_convert_filename(&qstr2, &qstr, fat_dir_entry->lcase, FAT32_NAME_SPECIFIC_TO_NORMAL);
 
-            // 如果与待找的名字相同，则修改相应的文件元信息
-            if ( generic_compare_filename( &qstr2, &(dentry_for_this_inode->d_name) ) == 0 ){
-                fat_dir_entry->size         = inode->i_size;
+            if (generic_compare_filename(&qstr2, &(dentry_of_this_inode->d_name)) == 0){
+                // change file size
+                fat_dir_entry->size  = inode->i_size;
                 found = 1;
-                break;                          // 跳出的是对每一个目录项的循环
+                break;
             }
         }
-        if (found)
-            break;                              // 跳出的是对每一页的循环
+        if (found) break;
     }
 
     // 如果没找到相应的inode
