@@ -103,7 +103,7 @@ u32 init_fat32(u32 base)
 
     struct super_block *fat32_sb = (struct super_block *)kmalloc(sizeof(struct super_block));
 
-    *fat32_sb = {
+    *fat32_sb = (struct super_block){
         .s_dirt = S_CLEAR,
 
         // 512B * N == cluster size
@@ -119,7 +119,7 @@ u32 init_fat32(u32 base)
     // root dentry object *
     // an extern global variable
     root_dentry = (struct dentry*)kmalloc(sizeof(struct dentry));
-    *root_dentry = {
+    *root_dentry = (struct dentry){
         .d_count = 1,
         .d_mounted = 0, // mounted point
         // parent children
@@ -148,7 +148,7 @@ u32 init_fat32(u32 base)
 
     // root entry inode entry, inode ID
     struct inode *root_inode = (struct inode *)kmalloc(sizeof(struct inode));
-    *root_inode = {
+    *root_inode = (struct inode){
         .i_count = 1,
         // in FAT32
         // inode ID = first cluster ID
@@ -181,7 +181,7 @@ u32 init_fat32(u32 base)
     list_add(&(root_dentry->d_alias), &(root_inode->i_dentry));
 
     // build inode address space
-    root_inode->i_addr = {
+    root_inode->i_addr = (struct address_space){
         .a_inode = root_inode,
 
         // pagesize == block size
@@ -207,8 +207,8 @@ u32 init_fat32(u32 base)
     root_inode->i_addr.a_page = (u32 *)kmalloc(root_inode->i_blocks * sizeof(u32));
 
     next_clu = fat32_bi->fa_DBR->root_clu;
-    for(unsigned i = 0; i < root_inode.i_blocks; i++) {
-        root_inode->i_addr.a_page[i] = next_clu;
+    for(unsigned k = 0; k < root_inode.i_blocks; k++) {
+        root_inode->i_addr.a_page[k] = next_clu;
         next_clu = read_fat(root_inode, next_clu);
     }
 
@@ -240,7 +240,7 @@ u32 init_fat32(u32 base)
 
     // flobal extern variable
     root_mnt = (struct vfsmount *)kmalloc(sizeof(struct vfsmount));
-    *root_mnt = {
+    *root_mnt = (struct vfsmount){
         // parent file system
         .mnt_parent = root_mnt,
         // point dir
@@ -276,8 +276,8 @@ u32 fat32_delete_inode(struct dentry *dentry)
         struct condition cond;
         cond.cond1 = (void *)(&page_number);
         cond.cond2 = (void *)(parent_inode);
-        struct vfs_page *page = (struct vfs_page *)pcache->c_op->look_up(pcache, &cond);
-        if(page == NULL) {
+        struct vfs_page *cur_page = (struct vfs_page *)pcache->c_op->look_up(pcache, &cond);
+        if(cur_page == NULL) {
             cur_page = (struct vfs_page *)kmalloc(sizeof(struct vfs_page));
 
             cur_page->p_state    = P_CLEAR;
@@ -374,7 +374,7 @@ u32 fat32_write_inode(struct inode *inode, struct dentry *parent)
 
     found = 0;
     dir         = parent->d_inode;
-    mapping     = &(dir->i_data);
+    mapping     = &(dir->i_addr);
     pagesize    = dir->i_blksize;
     
     struct dentry *dentry_of_this_inode = container_of(inode->i_dentry.next, struct dentry, d_alias);
@@ -461,20 +461,273 @@ u32 fat32_write_inode(struct inode *inode, struct dentry *parent)
     
     return 0;
 }
-// 下面是为fat32专门实现的 inode_operations
-// 尝试在外存中查找需要的dentry对应的inode。若找到，相应的inode会被新建并加入高速缓存，dentry与之的联系也会被建立
+/**
+ * dir: inode of parent dir
+ * dentry: to build inode for it
+ *
+ * find block/cluster/page for this dentry
+ * build inode
+ */
 struct dentry* fat32_inode_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *nd)
 {
+    u32 err;
+    u32 found;
 
+    // parent dir
+    // inode -> address space
+    struct address_space *p_mapping = &(dir->i_addr);
+    for(u32 i = 0; i < dir->i_blocks; i++) {
+        // get cluster ID
+        u32 cur_page = p_mapping->a_op->bmap(dir, i);
+        struct condition cond = (struct condition){
+            .cond1 = (void *)(&cur_page),
+            .cond2 = (void *)(dir)
+        };
+        cur_page = (struct vfs_page *)pcache->c_op->look_up(pcache, &cond);
+
+        if(cur_page == NULL) {
+            cur_page = (struct vfs_page *)kmalloc(sizeof(struct vfs_page));
+            *cur_page = (struct vfs_page){
+                .p_state    = P_CLEAR,
+                .p_location = page_number,
+                .p_mapping  = p_mapping
+            }
+            INIT_LIST_HEAD(&(cur_page->p_hash));
+            INIT_LIST_HEAD(&(cur_page->p_LRU));
+            INIT_LIST_HEAD(&(cur_page->p_list));
+
+            p_mapping->a_op->readpage(cur_page);
+            pcache->c_op->add(pcache, (void *)cur_page);
+
+            // add this page into inode cached list
+            list_add(&(cur_page->p_list), &(p_mapping->a_cache));
+        }
+        // parse every page
+        // FAT32 every cluster
+        for ( u32 di = 0; di < p_inode->i_blksize; di += FAT32_DIR_ENTRY_LEN ){
+            struct fat_dir_entry *dir_entry = (struct fat_dir_entry *)(cur_page->p_data + di);
+
+            /**
+             * 00000000 read/write
+             * 00000001 read
+             * 00000010 hide
+             * 00000100 system
+             * 00001000 volumn
+             * 00010000 sub dir
+             * 00100000 archive
+             */
+            if (dir_entry->attr == 0x08 || dir_entry->attr == 0x0f ||
+                dir_entry->name[0] == 0xe5)
+                continue;
+
+            // no other dir entry
+            if (dir_entry->name[0] == '\000')
+                break;
+            
+            // parse name
+            u8 file_name[MAX_FAT32_SHORT_FILE_NAME_LEN];
+            struct qstr  qstr_name;
+            struct qstr  qstr_name2;
+            for (u32 j = 0; j < MAX_FAT32_SHORT_FILE_NAME_LEN; j++ )
+                name[j] = dir_entry->name[j];
+            qstr_name.name = name;
+            qstr_name.len = MAX_FAT32_SHORT_FILE_NAME_LEN;
+
+            // convert name
+            fat32_convert_filename(&qstr_name2, &qstr_name, dir_entry->lcase, FAT32_NAME_SPECIFIC_TO_NORMAL);
+
+            // build inode for this dir entry / file
+            if(generic_compare_filename(&qstr_name2, &(dentry->d_name)) == 0) {
+                u32 low = dir_entry->startlo;
+                u32 high = dir_entry->starthi;
+                u32 clu_id = high << 16u + low;
+
+                // build inode for this dir entry / file
+                struct inode *new_inode = (struct inode*)kmalloc(sizeof(struct inode));
+                *new_inode = (struct inode) {
+                    .i_count          = 1,
+                    .i_ino            = clu_id,                 
+                    .i_blkbits        = dir->i_blkbits,
+                    .i_blksize        = dir->i_blksize,
+                    .i_sb             = dir->i_sb,
+                    .i_size           = fat_dir_entry->size,
+                    .i_blocks         = 0,
+                    .i_fop            = fat32_file_operations
+                };
+                INIT_LIST_HEAD(&(new_inode->i_dentry));
+
+                //!!!
+                // dirctory and non-directory have different operations
+                // just as root directory dentry [0] must be
+                //!!!
+                if (fat_dir_entry->attr & ATTR_DIRECTORY)
+                    new_inode->i_op = &(fat32_inode_operations[0]);
+                else
+                    new_inode->i_op = &(fat32_inode_operations[1]);
+
+                new_inode->i_addr.a_inode        = new_inode;
+                new_inode->i_addr.a_pagesize    = new_inode->i_blksize;
+                new_inode->i_addr.a_op          = &(fat32_address_space_operations);
+                INIT_LIST_HEAD(&(new_inode->i_addr.a_cache));
+
+                            
+                // make sure
+                // how many blocks(cluster in FAT32) for root directory
+                int block_count = 0;
+                while(clu_id != 0x0fffffff) {
+                    block_count++;
+                    clu_id  = read_fat(new_inode, clu_id);
+                }
+                root->inode->i_blocks = block_count;
+
+                // new_inode i_addr.a_page
+                // file -> logical virtual page
+                new_inode->i_addr.a_page = (u32 *)kmalloc(new_inode->i_blocks * sizeof(u32));
+
+                clu_id = fat32_bi->fa_DBR->root_clu;
+                for(unsigned k = 0; k < new_inode.i_blocks; k++) {
+                    new_inode->i_addr.a_page[k] = clu_id;
+                    clu_id = read_fat(new_inode, clu_id);
+                }
+                
+                // inode -> cache
+                // icache->c_op->add(icache, (void*)new_inode);
+                found = 1;
+                break;                          // 跳出的是对每一个目录项的循环
+            }
+        }
+        if (found)
+            break;          
+    }
+
+    if(!found) return 0;
+    dentry->d_inode = new_inode;
+    dentry->d_op = fat32_dentry_operations;
+    list_add(&(dentry->d_alias), &(new_inode->i_dentry));
+
+    return dentry;
 }
 
 u32 fat32_create(struct inode *dir, struct dentry *dentry, u32 mode, struct nameidata *nd)
+{
+    return 0u;
+}
+/**
+ * file: open file(inode.address_space, location/clu_id)
+ * it must be dir
+ * 
+ * getdent (dentry[] size)
+ */
+u32 fat32_readdir(struct file *file, struct getdent *getdent)
+{
+    u8 name[MAX_FAT32_SHORT_FILE_NAME_LEN];
+    u32 i;
+    u32 j;
+    u32 err;
+    u32 addr;
+    u32 low;
+    u32 high;
+    u32 begin;
+    u32 pagesize;
+    u32 curPageNo;
+    struct inode                    *dir;
+    struct qstr                     qstr;
+    struct qstr                     qstr2;
+    struct condition                cond;
+    struct fat_dir_entry            *fat_dir_entry;
+    struct vfs_page                 *curPage;
+    struct address_space            *mapping;
 
-// 下面是为fat32专门实现的file operations
-u32 fat32_readdir(struct file * file, struct getdent * getdent)
+    dir = file->f_dentry->d_inode;
+    mapping = &(dir->i_data);
+    pagesize = dir->i_blksize;
 
-// 下面是为fat32专门实现的其他方法
-// 文件名双向转换
+    getdent->count = 0;
+    getdent->dirent = (struct dirent *) kmalloc ( sizeof(struct dirent) * (dir->i_blocks * pagesize / FAT32_DIR_ENTRY_LEN));
+    if (getdent->dirent == 0)
+        return -ENOMEM;
+
+    for ( i = 0; i < dir->i_blocks; i++){
+        curPageNo = mapping->a_op->bmap(dir, i);
+        if (curPageNo == 0)
+            return -ENOENT;
+
+        // cache hit
+        cond.cond1 = (void*)(&curPageNo);
+        cond.cond2 = (void*)(dir);
+        curPage = (struct vfs_page *)pcache->c_op->look_up(pcache, &cond);
+        
+        // read in sector
+        if ( curPage == NULL ){
+            curPage = (struct vfs_page *) kmalloc ( sizeof(struct vfs_page) );
+            if (!curPage)
+                return -ENOMEM;
+
+            curPage->p_state    = P_CLEAR;
+            curPage->p_location = curPageNo;
+            curPage->p_mapping  = mapping;
+            INIT_LIST_HEAD(&(curPage->p_hash));
+            INIT_LIST_HEAD(&(curPage->p_LRU));
+            INIT_LIST_HEAD(&(curPage->p_list));
+
+            err = mapping->a_op->readpage(curPage);
+            if ( IS_ERR_VALUE(err) ){
+                release_page(curPage);
+                return 0;
+            }
+
+            curPage->p_state = P_CLEAR;
+            pcache->c_op->add(pcache, (void*)curPage);
+            list_add(&(curPage->p_list), &(mapping->a_cache));
+        }
+
+        // for each dentry      
+        for ( begin = 0; begin < pagesize; begin += FAT32_DIR_ENTRY_LEN ) {
+            fat_dir_entry = (struct fat_dir_entry *)(curPage->p_data + begin);
+
+            if (fat_dir_entry->attr == 0x08 || fat_dir_entry->attr == 0x0f ||
+                fat_dir_entry->name[0] == 0xe5)
+                continue;
+
+            if (fat_dir_entry->name[0] == '\000')
+                break;
+            
+            // get name
+            kernel_memset( name, 0, MAX_FAT32_SHORT_FILE_NAME_LEN * sizeof(u8) );
+            for ( j = 0; j < MAX_FAT32_SHORT_FILE_NAME_LEN; j++ )
+                name[j] = fat_dir_entry->name[j];
+            
+            qstr.name = name;
+            qstr.len = MAX_FAT32_SHORT_FILE_NAME_LEN;
+
+            // name
+            fat32_convert_filename(&qstr2, &qstr, fat_dir_entry->lcase, FAT32_NAME_SPECIFIC_TO_NORMAL);
+
+            low     = fat_dir_entry->startlo;
+            high    = fat_dir_entry->starthi;
+            addr    = (high << 16) + low;
+
+            getdent->dirent[getdent->count].ino         = addr;
+            getdent->dirent[getdent->count].name        = qstr2.name;
+
+            if ( fat_dir_entry->attr & ATTR_DIRECTORY )
+                getdent->dirent[getdent->count].type    = FT_DIR;
+            else
+                getdent->dirent[getdent->count].type    = FT_REG_FILE;
+
+            getdent->count += 1;
+        } 
+    }
+
+    return 0;
+}
+
+
+// dest
+// src
+// mode == system reserved byte in an entry
+// FAT32_NAME_NORMAL_TO_SPECIFIC 12[.] -> 11[]
+// FAT32_NAME_SPECIFIC_TO_NORMAL 11[] -> 12[.]
 void fat32_convert_filename(struct qstr* dest, const struct qstr* src, u8 mode, u32 direction)
 {
     u8* name;
@@ -588,10 +841,34 @@ void fat32_convert_filename(struct qstr* dest, const struct qstr* src, u8 mode, 
    
     return;
 }
-// 下面是为fat32专门实现的 address_space_operations
-// 从外存读入一页
-u32 fat32_readpage(struct vfs_page *page)
 
+// address_operation
+// read a page(data, location, mapping(address space in inode))
+u32 fat32_readpage(struct vfs_page *page)
+{
+    u32 err;
+    u32 data_base;
+    u32 abs_sect_addr;
+    struct inode *inode;
+
+    // sector ID
+    // i_blksize == cluster size
+    // cluster size / sector size = # sec per clu
+    inode = page->p_mapping->a_host;
+    data_base = ((struct fat32_basic_information *)(inode->i_sb->s_fs_info))->fa_FAT->data_sec;
+    abs_sect_addr = data_base + (page->p_location - 2) * (inode->i_blksize >> SECTOR_SHIFT);
+
+    // read a cluster
+    page->p_data = ( u8* )kmalloc(sizeof(u8) * inode->i_blksize);
+    if (page->p_data == 0)
+        return -ENOMEM;
+    // how many sectors
+    err = read_block(page->p_data, abs_sect_addr, inode->i_blksize >> SECTOR_SHIFT);
+    if (err)
+        return -EIO;
+    
+    return 0;
+}
 // write page/cluster by inode.address space
 // also by cluster ID
 // == p_location
