@@ -1,8 +1,8 @@
 #ifndef _FAT_UTILS_H
 #define _FAT_UTILS_H
 
-#include "../../../include/zjunix/fs/fat.h"
-#include "../../../include/zjunix/type.h"
+#include <zjunix/fs/fat.h>
+#include <zjunix/type.h>
 
 // Manipulate data through pointers
 u16 get_u16(u8 *ch);
@@ -12,7 +12,7 @@ void set_u32(u8 *ch, u32 num);
 u32 fs_wa(u32 num);
 
 // Get file entry info
-u32 get_start_cluster(const _FILE_ *file);
+u32 get_start_cluster(const FILE *file);
 u32 get_fat_entry_value(u32 clus, u32 *ClusEntryVal);
 u32 fs_modify_fat(u32 clus, u32 ClusEntryVal);
 

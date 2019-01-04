@@ -458,7 +458,7 @@ struct file * dentry_open(struct dentry *dentry, struct vfsmount *mnt, u32 flags
 
 	f->f_flags      = flags;
 	f->f_mode       = ((flags+1) & O_ACCMODE) | FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE ;
-	f->f_mapping    = &(inode->i_data);
+	f->f_mapping    = &(inode->i_addr);
 	f->f_dentry     = dentry;
 	f->f_vfsmnt     = mnt;
 	f->f_pos        = 0;

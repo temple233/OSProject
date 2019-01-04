@@ -141,7 +141,7 @@ void ps() {
     // kernel_puts("PowerShell\n", VGA_WHITE, VGA_BLACK);
     kernel_puts("PS", VGA_GREEN, VGA_BLACK);
     kernel_puts(":", VGA_WHITE, VGA_BLACK);
-    kernel_puts(pwd_dentry->d_name.name, VGA_YELLOW, VGA_BLACK);
+    kernel_puts(pwd_dentry->d_name.name, VGA_CYAN, VGA_BLACK);
     kernel_puts(">", VGA_WHITE, VGA_BLACK);
     while (1) {
         c = kernel_getchar();
@@ -158,7 +158,7 @@ void ps() {
             // kernel_puts("PowerShell\n", VGA_WHITE, VGA_BLACK);
             kernel_puts("PS", VGA_GREEN, VGA_BLACK);
             kernel_puts(":", VGA_WHITE, VGA_BLACK);
-            kernel_puts(pwd_dentry->d_name.name, VGA_YELLOW, VGA_BLACK);
+            kernel_puts(pwd_dentry->d_name.name, VGA_CYAN, VGA_BLACK);
             kernel_puts(">", VGA_WHITE, VGA_BLACK);
         } else if (c == 0x08) {
             if (ps_buffer_index) {

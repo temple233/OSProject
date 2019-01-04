@@ -1,25 +1,16 @@
 #include "utils.h"
-#include "fat32.h"
-#include "../../../include/zjunix/vfs/vfs.h"
-
-// #include <driver/sd.h>
-// for debug
-#include "Win32DiskDriver.h"
+#include <driver/sd.h>
+#include "fat.h"
+#include <zjunix/vfs/vfs.h>
 
 #ifndef VFS_DEBUG
 /* Read/Write block for FAT (starts from first block of partition 1) */
-/*
- * 0 success
- * 1 fail
- */
-u32 read_block(u8 *buf, u32 addr, u32 count)
-{
-    return !sd_read_block(buf, addr, count);
+u32 read_block(u8 *buf, u32 addr, u32 count) {
+    return sd_read_block(buf, addr, count);
 }
 
-u32 write_block(u8 *buf, u32 addr, u32 count)
-{
-    return !sd_write_block(buf, addr, count);
+u32 write_block(u8 *buf, u32 addr, u32 count) {
+    return sd_write_block(buf, addr, count);
 }
 
 /* char to u16/u32 */
@@ -63,7 +54,7 @@ u32 get_entry_attr(u8 *entry) {
 }
 
 /* DIR_FstClusHI/LO to clus */
-u32 get_start_cluster(const _FILE_ *file) {
+u32 get_start_cluster(const FILE *file) {
     return (file->entry.attr.starthi << 16) + (file->entry.attr.startlow);
 }
 
@@ -111,10 +102,11 @@ fs_modify_fat_err:
 }
 
 /* Determine FAT entry for cluster */
+// clus => one secetor of 8 this 
 void cluster_to_fat_entry(u32 clus, u32 *ThisFATSecNum, u32 *ThisFATEntOffset) {
     u32 FATOffset = clus << 2;
     *ThisFATSecNum = fat_info.BPB.attr.reserved_sectors + (FATOffset >> 9) + fat_info.base_addr;
-    *ThisFATEntOffset = FATOffset & 511;
+    *ThisFATEntOffset = FATOffset & 511;// 0x01ff
 }
 
 /* data cluster num <==> sector num */

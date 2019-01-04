@@ -18,8 +18,6 @@ extern struct cache                     * dcache;                   // vfscache.
 extern struct cache                     * pcache;
 extern struct cache                     * icache;
 
-extern struct vfs_page* tempp;
-
 // VFS的接口函数
 struct super_operations ext2_super_operations = {
     .delete_inode = ext2_delete_inode,
@@ -54,7 +52,9 @@ struct address_space_operations ext2_address_space_operations = {
 };
 
 
-// 初始化基地址为base（绝对扇区地址）上的EXT2文件系统
+// initlize EXT2 flie system
+// base MBR get it
+// or EBR get it
 u32 init_ext2(u32 base){
     u32 i;
     u32 err;
@@ -67,8 +67,8 @@ u32 init_ext2(u32 base){
     struct inode                        * ext2_root_inode;
     struct vfsmount                     * ext2_root_mnt;
 
-    // 构建 ext2_basic_information 结构
-    ext2_BI = (struct ext2_base_information *) kmalloc ( sizeof(struct ext2_base_information) );
+    // ext2_basic_information
+    ext2_BI = (struct ext2_base_information *)kmalloc(sizeof(struct ext2_base_information));
     if (ext2_BI == 0)
         return -ENOMEM;
     ext2_BI->ex_base = base;
@@ -150,10 +150,10 @@ u32 init_ext2(u32 base){
     }
 
     // 构建关联的address_space结构
-    ext2_root_inode->i_data.a_host      = ext2_root_inode;
-    ext2_root_inode->i_data.a_pagesize  = ext2_sb->s_blksize;
-    ext2_root_inode->i_data.a_op        = &(ext2_address_space_operations);
-    INIT_LIST_HEAD(&(ext2_root_inode->i_data.a_cache));
+    ext2_root_inode->i_addr.a_inode      = ext2_root_inode;
+    ext2_root_inode->i_addr.a_pagesize  = ext2_sb->s_blksize;
+    ext2_root_inode->i_addr.a_op        = &(ext2_address_space_operations);
+    INIT_LIST_HEAD(&(ext2_root_inode->i_addr.a_cache));
 
     // 完成剩余的填充
     err = ext2_fill_inode(ext2_root_inode);
@@ -163,7 +163,7 @@ u32 init_ext2(u32 base){
     // 预先读取根目录的数据
     for (i = 0; i < ext2_root_inode->i_blocks; i++){
         
-        p_location = ext2_root_inode->i_data.a_op->bmap(ext2_root_inode, i);
+        p_location = ext2_root_inode->i_addr.a_op->bmap(ext2_root_inode, i);
         if (p_location == 0)
             continue;
 
@@ -173,7 +173,7 @@ u32 init_ext2(u32 base){
 
         curPage->p_state = P_CLEAR;
         curPage->p_location = p_location;
-        curPage->p_mapping = &(ext2_root_inode->i_data);
+        curPage->p_mapping = &(ext2_root_inode->i_addr);
         INIT_LIST_HEAD(&(curPage->p_hash));
         INIT_LIST_HEAD(&(curPage->p_LRU));
         INIT_LIST_HEAD(&(curPage->p_list));
@@ -329,7 +329,7 @@ u32 ext2_delete_inode(struct dentry *dentry){
     rec_len = 0;
     copy_start = 0;
     dir = dentry->d_parent->d_inode;
-    mapping = &(dir->i_data);
+    mapping = &(dir->i_addr);
     for ( i = 0; i < dir->i_blocks; i++){      // 对父目录关联的每一页
         curPageNo = mapping->a_op->bmap(dir, i);
         if (curPageNo == 0)
@@ -478,7 +478,7 @@ struct dentry * ext2_inode_lookup(struct inode * dir, struct dentry * dentry, st
 
     found = 0;
     new_inode = 0;
-    mapping = &(dir->i_data);
+    mapping = &(dir->i_addr);
 
     // 对目录关联的每一页
     for ( i = 0; i < dir->i_blocks; i++){
@@ -550,10 +550,10 @@ struct dentry * ext2_inode_lookup(struct inode * dir, struct dentry * dentry, st
                     new_inode->i_op         = &(ext2_inode_operations[1]);
 
                 // 填充关联的address_space结构
-                new_inode->i_data.a_host        = new_inode;
-                new_inode->i_data.a_pagesize    = new_inode->i_blksize;
-                new_inode->i_data.a_op          = &(ext2_address_space_operations);
-                INIT_LIST_HEAD(&(new_inode->i_data.a_cache));
+                new_inode->i_addr.a_inode        = new_inode;
+                new_inode->i_addr.a_pagesize    = new_inode->i_blksize;
+                new_inode->i_addr.a_op          = &(ext2_address_space_operations);
+                INIT_LIST_HEAD(&(new_inode->i_addr.a_cache));
 
                 // 把inode放入高速缓存
                 // icache->c_op->add(icache, (void*)new_inode);
@@ -602,7 +602,7 @@ u32 ext2_readdir(struct file * file, struct getdent * getdent){
     struct ext2_dir_entry           *ex_dir_entry;
 
     dir = file->f_dentry->d_inode;
-    mapping = &(dir->i_data);
+    mapping = &(dir->i_addr);
     pagesize = dir->i_blksize;
     getdent->count = 0;
     getdent->dirent = (struct dirent *) kmalloc ( sizeof(struct dirent) * (MAX_DIRENT_NUM));
@@ -693,7 +693,7 @@ u32 ext2_readpage(struct vfs_page * page) {
     struct inode *inode;
 
     // 计算绝对扇区地址
-    inode = page->p_mapping->a_host;
+    inode = page->p_mapping->a_inode;
     base = ((struct ext2_base_information *)(inode->i_sb->s_fs_info))->ex_base;
     abs_sect_addr = base + page->p_location * (inode->i_blksize >> SECTOR_SHIFT);
 
@@ -719,7 +719,7 @@ u32 ext2_writepage(struct vfs_page * page) {
     struct inode *inode;
 
     // 计算绝对扇区地址
-    inode = page->p_mapping->a_host;
+    inode = page->p_mapping->a_inode;
     base = ((struct ext2_base_information *)(inode->i_sb->s_fs_info))->ex_base;
     abs_sect_addr = base + page->p_location * (inode->i_blksize >> SECTOR_SHIFT);
     
@@ -740,7 +740,7 @@ u32 ext2_bmap(struct inode * inode, u32 curPageNo) {
     u32 ret_val;
     u32 first_no;
     u32 entry_num;
-    page = inode->i_data.a_page;
+    page = inode->i_addr.a_page;
   
     // 直接映射  
     if ( curPageNo < EXT2_FIRST_MAP_INDEX ) 
@@ -819,12 +819,12 @@ u32 ext2_fill_inode(struct inode *inode) {
     inode->i_blocks                     = ex_inode->i_blocks;
     inode->i_size                       = ex_inode->i_size;
 
-    // 填充inode.i_data->a_page的信息
-    inode->i_data.a_page = (u32 *) kmalloc (EXT2_N_BLOCKS * sizeof(u32));
-    if (inode->i_data.a_page == 0)
+    // 填充inode.i_addr->a_page的信息
+    inode->i_addr.a_page = (u32 *) kmalloc (EXT2_N_BLOCKS * sizeof(u32));
+    if (inode->i_addr.a_page == 0)
         return -ENOMEM;
     for ( i = 0; i < EXT2_N_BLOCKS; i++ )
-        inode->i_data.a_page[i] = ex_inode->i_block[i];
+        inode->i_addr.a_page[i] = ex_inode->i_block[i];
 
     return 0;
 }

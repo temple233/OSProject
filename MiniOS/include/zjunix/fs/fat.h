@@ -47,7 +47,7 @@ typedef struct fat_file {
     unsigned long clock_head;
     /* For normal FAT32, cluster size is 4k */
     BUF_4K data_buf[LOCAL_DATA_BUF_NUM];
-} _FILE_;
+} FILE;
 
 typedef struct fs_fat_dir {
     unsigned long cur_sector;
@@ -109,21 +109,21 @@ struct fs_info {
     u8 fat_fs_info[SECTOR_SIZE];
 };
 
-unsigned long fs_find(_FILE_ *file);
+unsigned long fs_find(FILE *file);
 
 unsigned long init_fs();
 
-unsigned long fs_open(_FILE_ *file, unsigned char *filename);
+unsigned long fs_open(FILE *file, unsigned char *filename);
 
-unsigned long fs_close(_FILE_ *file);
+unsigned long fs_close(FILE *file);
 
-unsigned long fs_read(_FILE_ *file, unsigned char *buf, unsigned long count);
+unsigned long fs_read(FILE *file, unsigned char *buf, unsigned long count);
 
-unsigned long fs_write(_FILE_ *file, const unsigned char *buf, unsigned long count);
+unsigned long fs_write(FILE *file, const unsigned char *buf, unsigned long count);
 
 unsigned long fs_fflush();
 
-void fs_lseek(_FILE_ *file, unsigned long new_loc);
+void fs_lseek(FILE *file, unsigned long new_loc);
 
 unsigned long fs_create(unsigned char *filename);
 

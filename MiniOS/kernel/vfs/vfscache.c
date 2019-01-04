@@ -306,7 +306,7 @@ void* pcache_look_up(struct cache *this, struct condition *cond) {
         current = current->next;
         tested = container_of(current, struct vfs_page, p_hash);
 
-        if ( tested->p_location == pageNum && tested->p_mapping->a_host == inode ){
+        if ( tested->p_location == pageNum && tested->p_mapping->a_inode == inode ){
             found = 1;
             break;
         }
