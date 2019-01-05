@@ -26,7 +26,7 @@
 #define O_ACCMODE	                            0x0003
 #define O_CREAT		                            0x0100                   // 如果文件不存在，就创建它
 #define O_APPEND	                            0x2000                   // 总是在文件末尾写
-#define ACC_MODE(x) ("/000/004/002/006"[(x)&O_ACCMODE])
+#define ACC_MODE(x) ("\000\004\002\006"[(x)&O_ACCMODE])
 
 #define MAY_APPEND	                            0x0008
 
@@ -164,22 +164,21 @@ struct open_intent {
 	u32	                                create_mode;
 };
 
-// 寻找目录用结构一
-struct nameidata {  
-    struct dentry                       *dentry;                // 对应目录项
-    struct vfsmount                     *mnt;                   // 对应文件系统挂载项
-    struct qstr                         last;                   // 最后一个分量的名字
-    u32                                 flags;                  // 打开标记
-    u32                                 last_type;              // 最后一个分量的文件类型
-    union {                                                     // 打开用
-		struct open_intent open;
-	} intent;
-};
+// // 寻找目录用结构一
+// struct nameidata {  
+//     struct dentry                       *dentry;                // 对应目录项
+//     struct vfsmount                     *mnt;                   // 对应文件系统挂载项
+//     struct qstr                         last;                   // 最后一个分量的名字
+//     u32                                 flags;                  // 打开标记
+//     u32                                 last_type;              // 最后一个分量的文件类型
+//     union {                                                     // 打开用
+// 		struct open_intent open;
+// 	} intent;
+// };
 
-// 寻找目录用结构二
-struct path {
-  	struct vfsmount                     *mnt;                   // 对应目录项
-  	struct dentry                       *dentry;                // 对应文件系统挂载项
+struct file_find_helper {
+  	struct vfsmount *mnt;       // mount
+  	struct dentry *this_dentry; // entry of directory
 };
 
 // 通用目录项信息
@@ -195,64 +194,51 @@ struct getdent {
     struct dirent                       *dirent;                // 目录项数组
 };
 
-// 超级块的操作函数
+// super operations
 struct super_operations {
-    // 删除目录项对应的内存中的VFS索引节点和磁盘上文件数据及元数据
     u32 (*delete_inode) (struct dentry *);
-    // 用通过传递参数指定的索引节点对象的内容更新一个文件系统的索引节点
     u32 (*write_inode) (struct inode *, struct dentry *);
 };
 
-// 打开的文件的操作函数
-struct file_operations {
-    // 从文件的*offset处开始读出count个字节，然后增加*offset的值（一般与文件指针对应）
-    u32 (*read)(struct file *, u8 *, u32, u32 *);
-    // 从文件的*offset处开始写入count个字节，然后增加*offset的值（一般与文件指针对应）
-    u32 (*write)(struct file *, u8 *, u32, u32 *);
-    // 通过创建一个新的文件对象而打开一个文件，并把它链接到相应的索引节点对象
-    u32 (*flush)(struct file *);
-    // 读取一个目录的目录项并放入第二个参数中
+// file primitives
+struct file_operations {  
+    u32 (*read)(struct file *, u8 *, u32, u32 *);   
+    u32 (*write)(struct file *, u8 *, u32, u32 *);   
+    u32 (*flush)(struct file *);   
     u32 (*readdir)(struct file *, struct getdent *);
 };
 
-// 文件节点的操作函数
+// inode
 struct inode_operations {
-    // 在某一目录下，为与目录项相关的普通文件创建一个新的磁盘索引节点
-    u32 (*create)(struct inode *,struct dentry *, u32, struct nameidata *);
-    // 为包含在一个目录项对象中的文件名对应的索引节点查找目录
-    struct dentry *(*lookup)(struct inode *,struct dentry *, struct nameidata *);
+    u32 (*create)(struct inode *,struct dentry *, u32, struct file_find_helper *);
+    struct dentry *(*lookup)(struct inode *,struct dentry *, struct file_find_helper *);
 };
 
-// 已缓存的页的操作函数
+// address space == block/cluster/page
 struct address_space_operations {
-    // 把一页写回外存
     u32 (*writepage)(struct vfs_page *);
-    // 从外存读入一页
     u32 (*readpage)(struct vfs_page *);
-    // 根据由相对文件页号得到相对物理页号
     u32 (*bmap)(struct inode *, u32);
 };
 
-// 目录项的操作函数
+// directory
 struct dentry_operations {
-    // 比较两个文件名。name1应该属于dir所指的目录。缺省的VFS函数是常用的。不过，每个文件系统可用自己的实现。如MS-DOS文件系统不区分大小写
     u32 (*compare)(const struct qstr *, const struct qstr *);
 };
 
-// 接下来是函数声明（缩进表明层次结构）
 // vfs.c
 u32 init_vfs();
 u32 vfs_read_MBR();
 
 // open.c
 struct file *vfs_open(const u8 *, u32, u32);
-u32 open_namei(const u8 *, u32, u32, struct nameidata *);
-u32 path_lookup(const u8 *, u32 , struct nameidata *);
-u32 link_path_walk(const u8 *, struct nameidata *);
-void follow_dotdot(struct vfsmount **, struct dentry **);
-u32 do_lookup(struct nameidata *, struct qstr *, struct path *);
-struct dentry *real_lookup(struct dentry *, struct qstr *, struct nameidata *);
-struct dentry *__lookup_hash(struct qstr *, struct dentry *, struct nameidata *);
+u32 open_namei(const u8 *, u32, u32, struct file_find_helper *ffh);
+u32 path_lookup(const u8 *, u32 , struct file_find_helper *ffh);
+u32 link_path_walk(const u8 *, struct file_find_helper *ffh);
+// void follow_dotdot(struct vfsmount **, struct dentry **);
+// u32 do_lookup(struct nameidata *, struct qstr *, struct path *);
+struct dentry *real_lookup(struct dentry *, struct qstr *, struct file_find_helper *ffh);
+// struct dentry *__lookup_hash(struct qstr *, struct dentry *, struct nameidata *);
 struct dentry *d_alloc(struct dentry *, const struct qstr *);
 struct file *dentry_open(struct dentry *, struct vfsmount *, u32);
 u32 vfs_close(struct file *);

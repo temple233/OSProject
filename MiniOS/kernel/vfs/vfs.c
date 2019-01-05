@@ -8,7 +8,9 @@
 #include <zjunix/utils.h>
 #include <driver/vga.h>
 
-// 公用全局变量
+// sorry!!! 
+// definition some global variables
+// sorry!!!
 struct master_boot_record   * MBR;
 /**
  * root_dentry is referenced in mount.c

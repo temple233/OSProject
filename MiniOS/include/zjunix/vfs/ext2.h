@@ -113,8 +113,8 @@ struct ext2_inode {
 u32 init_ext2(u32);
 u32 ext2_delete_inode(struct dentry *);
 u32 ext2_write_inode(struct inode *, struct dentry *);
-struct dentry * ext2_inode_lookup(struct inode *, struct dentry *, struct nameidata *);
-u32 ext2_create(struct inode *, struct dentry *, u32, struct nameidata *);
+struct dentry * ext2_inode_lookup(struct inode *, struct dentry *, struct file_find_helper *ffh);
+u32 ext2_create(struct inode *, struct dentry *, u32, struct file_find_helper *ffh);
 u32 ext2_readdir(struct file *, struct getdent *);
 u32 ext2_readpage(struct vfs_page *);
 u32 ext2_writepage(struct vfs_page *);
@@ -122,6 +122,6 @@ u32 ext2_bmap(struct inode *, u32);
 u32 ext2_fill_inode(struct inode *);
 u32 ext2_check_inode_bitmap(struct inode *);
 u32 ext2_group_base_sect(struct inode *);
-
+u32 ext2_inode_find_from_ram_to_disk(struct inode *inode, u32 *inode_sector_id, u32 *inode_sector_offset);
 
 #endif

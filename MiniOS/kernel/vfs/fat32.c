@@ -503,7 +503,7 @@ u32 fat32_write_inode(struct inode *inode, struct dentry *parent)
  * find block/cluster/page for this dentry
  * build inode
  */
-struct dentry* fat32_inode_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *nd)
+struct dentry* fat32_inode_lookup(struct inode *dir, struct dentry *dentry, struct file_find_helper *ffh)
 {
     u32 err;
     u32 found;
@@ -655,7 +655,7 @@ struct dentry* fat32_inode_lookup(struct inode *dir, struct dentry *dentry, stru
     return dentry;
 }
 
-u32 fat32_create(struct inode *dir, struct dentry *dentry, u32 mode, struct nameidata *nd)
+u32 fat32_create(struct inode *dir, struct dentry *dentry, u32 mode, struct file_find_helper *ffh)
 {
     return 0u;
 }
