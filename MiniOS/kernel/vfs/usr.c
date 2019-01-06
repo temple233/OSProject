@@ -136,7 +136,7 @@ u32 vfs_rm(const u8 *path){
     }
     
     // so easy
-    dentry = nd.dentry;
+    dentry = ffh.this_dentry;
     err = dentry->d_inode->i_sb->s_op->delete_inode(dentry);
     if (err)
         return err;

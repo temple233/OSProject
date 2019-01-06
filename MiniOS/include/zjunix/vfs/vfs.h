@@ -209,6 +209,13 @@ struct file_operations {
 };
 
 // inode
+/**
+ * inode_look_up make it possible
+ * new many inodes in memory
+ *
+ * @note no inode cache
+ * is it foolish?
+ */
 struct inode_operations {
     u32 (*create)(struct inode *,struct dentry *, u32, struct file_find_helper *);
     struct dentry *(*lookup)(struct inode *,struct dentry *, struct file_find_helper *);

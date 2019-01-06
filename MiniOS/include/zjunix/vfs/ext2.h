@@ -16,27 +16,25 @@
 #define                 EXT2_BLOCK_ADDR_SHIFT               2
 #define                 MAX_DIRENT_NUM                      128
 
-// 文件类型
-enum {
-         EXT2_FT_UNKNOWN,     
-         EXT2_FT_REG_FILE,
-         EXT2_FT_DIR,   
-};
-
-// EXT2 文件系统信息汇总
+/**
+ * ext2 meta information
+ */
 struct ext2_base_information {
-    u32                 ex_base;                            // 启动块的基地址（绝对扇区地址，下同）
-    u32                 ex_first_sb_sect;                   // 第一个super_block的基地址
-    u32                 ex_first_gdt_sect;                  // 第一个组描述符表的基地址
+    u32 ex_base;                            // base sector ID
+    u32 ex_first_sb_sect;                   // super block in block group 0
+    u32 ex_first_gdt_sect;                  // GBT in group 0
     union {
-        u8                  *data;
+        u8 *data;
         struct ext2_super   *attr;
-    } sb;                                                   // 超级块数据    
+    } sb;                                   // data    
 };
         
-// EXT2 文件系统内部超级块
+/**
+ * ext2 super block
+ * in disk
+ */
 struct ext2_super {
-    u32                 inode_num;                          // inode数
+    u32 inode_num;                          // inode数
     u32                 block_num;                          // 块数
     u32                 res_block_num;                      // 保留块数
     u32                 free_block_num;                     // 空闲块数

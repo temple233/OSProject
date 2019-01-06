@@ -4,16 +4,16 @@
 #include <zjunix/vfs/vfs.h>
 
 #define DCACHE_CAPACITY                 16
-#define DCACHE_HASHTABLE_SIZE          16
+#define DCACHE_HASHTABLE_SIZE           16
 
 #define ICACHE_CAPACITY                 16
-#define ICACHE_HASHTABLE_SIZE          16
+#define ICACHE_HASHTABLE_SIZE           16
 
 #define PCACHE_CAPACITY                 64
 #define PCACHE_HASHTABLE_SIZE           16
 
-#define P_CLEAR                         0
-#define P_DIRTY                         1
+#define PG_CACHE_CLEAR                         0
+#define PG_CACHE_DIRTY                         1
 
 // 文件缓存页
 struct vfs_page {
