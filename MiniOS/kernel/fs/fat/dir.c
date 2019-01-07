@@ -11,7 +11,7 @@ extern u32 dir_data_clock_head;
 extern struct fs_info fat_info;
 
 /* open directory */
-u32 fs_open_dir(FS_FAT_DIR *dir, u8 *filename) {
+u32 fs_open_dir_fat(FS_FAT_DIR *dir, u8 *filename) {
     u32 index;
     u32 i;
 
@@ -34,7 +34,7 @@ u32 fs_open_dir(FS_FAT_DIR *dir, u8 *filename) {
         for (i = 0; i < 256 && filename[i] != 0; i++)
             dir_find.path[i] = filename[i];
 
-        if (fs_find(&dir_find) == 1)
+        if (fs_find_fat(&dir_find) == 1)
             goto fs_open_dir_err;
 
         /* If file not exists */

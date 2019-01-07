@@ -109,44 +109,66 @@ struct fs_info {
     u8 fat_fs_info[SECTOR_SIZE];
 };
 
-unsigned long fs_find(FILE *file);
+unsigned long fs_find_fat(FILE *file);
 
-unsigned long init_fs();
+unsigned long init_fs_fat();
 
-unsigned long fs_open(FILE *file, unsigned char *filename);
+unsigned long fs_open_fat(FILE *file, unsigned char *filename);
 
-unsigned long fs_close(FILE *file);
+unsigned long fs_close_fat(FILE *file);
 
-unsigned long fs_read(FILE *file, unsigned char *buf, unsigned long count);
+unsigned long fs_read_fat(FILE *file, unsigned char *buf, unsigned long count);
 
-unsigned long fs_write(FILE *file, const unsigned char *buf, unsigned long count);
+unsigned long fs_write_fat(FILE *file, const unsigned char *buf, unsigned long count);
 
-unsigned long fs_fflush();
+unsigned long fs_fflush_fat();
 
-void fs_lseek(FILE *file, unsigned long new_loc);
+void fs_lseek_fat(FILE *file, unsigned long new_loc);
 
-unsigned long fs_create(unsigned char *filename);
+unsigned long fs_create_fat(unsigned char *filename);
 
-unsigned long fs_mkdir(unsigned char *filename);
+unsigned long fs_mkdir_fat(unsigned char *filename);
 
-unsigned long fs_rm(unsigned char *filename);
+u32 fs_open_dir_fat(FS_FAT_DIR *dir, u8 *filename);
 
-unsigned long fs_mv(unsigned char *src, unsigned char *dest);
+u32 fs_read_dir(FS_FAT_DIR *dir, u8 *buf);
 
-unsigned long fs_open_dir(FS_FAT_DIR *dir, unsigned char *filename);
+unsigned long fs_rm_fat(unsigned char *filename);
 
-unsigned long fs_read_dir(FS_FAT_DIR *dir, unsigned char *buf);
+unsigned long fs_mv_fat(unsigned char *src, unsigned char *dest);
 
-unsigned long fs_cat(unsigned char * path);
+unsigned long fs_cat_fat(unsigned char * path);
 
-void get_filename(unsigned char *entry, unsigned char *buf);
-
+// utils.c
 u32 read_block(u8 *buf, u32 addr, u32 count);
 
 u32 write_block(u8 *buf, u32 addr, u32 count);
 
-u32 get_entry_filesize(u8 *entry);
+u16 get_u16(u8 *ch);
 
-u32 get_entry_attr(u8 *entry);
+u32 get_u32(u8 *ch);
+
+void set_u16(u8 *ch, u16 num);
+
+void set_u32(u8 *ch, u32 num);
+
+u32 fs_wa(u32 num);
+
+// fat32_utils.c
+u32 get_start_cluster(const FILE *file);
+
+u32 get_fat_entry_value(u32 clus, u32 *ClusEntryVal);
+
+u32 fs_modify_fat(u32 clus, u32 ClusEntryVal);
+
+u32 get_entry_filesize_fat(u8 *entry);
+
+u32 get_entry_attr_fat(u8 *entry);
+
+void get_filename(u8 *entry, u8 *buf);
+
+void cluster_to_fat_entry(u32 clus, u32 *ThisFATSecNum, u32 *ThisFATEntOffset);
+u32 fs_dataclus2sec(u32 clus);
+u32 fs_sec2dataclus(u32 sec);
 
 #endif  // !_ZJUNIX_FS_FAT_H

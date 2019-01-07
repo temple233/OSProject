@@ -52,7 +52,7 @@ u32 init_vfs(){
     }
     log(LOG_OK, "init_fat32()");
 
-    err = init_ext2(MBR->m_base[1]);            // 第二个分区为EXT2，读取元数据。并挂载EXT2文件系统与指定位置（/ext）
+    // err = init_ext2(MBR->m_base[1]);            // 第二个分区为EXT2，读取元数据。并挂载EXT2文件系统与指定位置（/ext）
     if ( IS_ERR_VALUE(err) ){
         log(LOG_FAIL, "init_ext2()");
         goto vfs_init_err;

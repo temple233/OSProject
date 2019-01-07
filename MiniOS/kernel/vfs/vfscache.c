@@ -281,7 +281,7 @@ void pcache_put_LRU(struct cache *this){
     put_page = container_of(put, struct vfs_page, p_LRU);
 
     // 如果这个页面被修改过，先写回磁盘
-    if(put_page->p_state & P_DIRTY)
+    if(put_page->p_state & PG_CACHE_DIRTY)
         this->c_op->write_back((void *)put_page);
 
     // 分别从LRU链表、哈希表、对应的地址空间中删除

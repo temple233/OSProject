@@ -9,14 +9,14 @@
 #include <zjunix/utils.h>
 
 // 外部变量
-extern struct dentry                    * root_dentry;              // vfs.c
-extern struct dentry                    * pwd_dentry;
-extern struct vfsmount                  * root_mnt;
-extern struct vfsmount                  * pwd_mnt;
+extern struct dentry *root_dentry;              // vfs.c
+extern struct dentry *pwd_dentry;
+extern struct vfsmount *root_mnt;
+extern struct vfsmount *pwd_mnt;
 
-extern struct cache                     * dcache;                   // vfscache.c
-extern struct cache                     * pcache;
-extern struct cache                     * icache;
+extern struct cache *dcache;                   // vfscache.c
+extern struct cache *pcache;
+extern struct cache *icache;
 
 struct super_operations fat32_super_operations = {
     .delete_inode   = fat32_delete_inode,
@@ -53,7 +53,7 @@ u32 fat32_delete_inode(struct dentry *dentry)
         if(cur_page == 0) {
             cur_page = (struct vfs_page *)kmalloc(sizeof(struct vfs_page));
 
-            cur_page->p_state    = P_CLEAR;
+            cur_page->p_state    = PG_CACHE_CLEAR;
             cur_page->p_location = page_number;
             cur_page->p_mapping  = p_mapping;
             INIT_LIST_HEAD(&(cur_page->p_hash));
@@ -167,7 +167,7 @@ u32 fat32_write_inode(struct inode *inode, struct dentry *parent)
             if (!curPage)
                 return -ENOMEM;
 
-            curPage->p_state    = P_CLEAR;
+            curPage->p_state    = PG_CACHE_CLEAR;
             curPage->p_location = curPageNo;
             curPage->p_mapping  = mapping;
             INIT_LIST_HEAD(&(curPage->p_hash));
@@ -180,7 +180,7 @@ u32 fat32_write_inode(struct inode *inode, struct dentry *parent)
                 return -ENOENT;
             }
 
-            curPage->p_state = P_CLEAR;
+            curPage->p_state = PG_CACHE_CLEAR;
             pcache->c_op->add(pcache, (void*)curPage);
             list_add(&(curPage->p_list), &(mapping->a_cache));
         }

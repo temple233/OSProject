@@ -1,13 +1,17 @@
-#include "fat.h"
+//
+//
+//
+//
+
 #include <driver/vga.h>
 #include <zjunix/log.h>
-#include "utils.h"
-
-#ifdef FS_DEBUG
-#include <intr.h>
+#include <zjunix/page.h>
 #include <zjunix/log.h>
+
+#include <intr.h>
 #include "debug.h"
-#endif  // ! FS_DEBUG
+// fat.h also zjunix/fs/fat.h
+#include "fat.h"
 
 /* fat buffer clock head */
 u32 fat_clock_head = 0;
@@ -22,7 +26,7 @@ u32 dir_data_clock_head = 0;
 
 struct fs_info fat_info;
 
-u32 init_fat_info() {
+static inline u32 init_fat_info() {
     u8 meta_buf[512];
 
     /* Init bufs */
@@ -93,7 +97,7 @@ init_fat_info_err:
     return 1;
 }
 
-void init_fat_buf() {
+static inline void init_fat_buf() {
     int i = 0;
     for (i = 0; i < FAT_BUF_NUM; i++) {
         fat_buf[i].cur = 0xffffffff;
@@ -101,7 +105,7 @@ void init_fat_buf() {
     }
 }
 
-void init_dir_buf() {
+static inline void init_dir_buf() {
     int i = 0;
     for (i = 0; i < DIR_DATA_BUF_NUM; i++) {
         dir_data_buf[i].cur = 0xffffffff;
@@ -110,7 +114,7 @@ void init_dir_buf() {
 }
 
 /* FAT Initialize */
-u32 init_fs() {
+u32 init_fs_fat() {
     u32 succ = init_fat_info();
     if (0 != succ)
         goto fs_init_err;
@@ -214,7 +218,7 @@ u32 fs_cmp_filename(const u8 *f1, const u8 *f2) {
 }
 
 /* Find a file, only absolute path with starting '/' accepted */
-u32 fs_find(FILE *file) {
+u32 fs_find_fat(FILE *file) {
     u8 *f = file->path;
     u32 next_slash;
     u32 i, k;
@@ -312,7 +316,7 @@ fs_find_err:
 }
 
 /* Open: just do initializing & fs_find */
-u32 fs_open(FILE *file, u8 *filename) {
+u32 fs_open_fat(FILE *file, u8 *filename) {
     u32 i;
 
     /* Local buffer initialize */
@@ -330,7 +334,7 @@ u32 fs_open(FILE *file, u8 *filename) {
 
     file->loc = 0;
 
-    if (fs_find(file) == 1)
+    if (fs_find_fat(file) == 1)
         goto fs_open_err;
 
     /* If file not exists */
@@ -342,7 +346,7 @@ fs_open_err:
     return 1;
 }
 /* fflush, write global buffers to sd */
-u32 fs_fflush() {
+u32 fs_fflush_fat() {
     u32 i;
 
     // FSInfo shoud add base_addr
@@ -367,7 +371,7 @@ fs_fflush_err:
 }
 
 /* Close: write all buf in memory to SD */
-u32 fs_close(FILE *file) {
+u32 fs_close_fat(FILE *file) {
     u32 i;
     u32 index;
 
@@ -382,7 +386,7 @@ u32 fs_close(FILE *file) {
     for (i = 0; i < 32; i++)
         *(dir_data_buf[index].buf + file->dir_entry_pos + i) = file->entry.data[i];
     /* do fflush to write global buffers */
-    if (fs_fflush() == 1)
+    if (fs_fflush_fat() == 1)
         goto fs_close_err;
     /* write local data buffer */
     for (i = 0; i < LOCAL_DATA_BUF_NUM; i++)
@@ -395,7 +399,7 @@ fs_close_err:
 }
 
 /* Read from file */
-u32 fs_read(FILE *file, u8 *buf, u32 count) {
+u32 fs_read_fat(FILE *file, u8 *buf, u32 count) {
     u32 start_clus, start_byte;
     u32 end_clus, end_byte;
     u32 filesize = file->entry.attr.size;
@@ -543,7 +547,7 @@ fs_alloc_err:
 }
 
 /* Write to file */
-u32 fs_write(FILE *file, const u8 *buf, u32 count) {
+u32 fs_write_fat(FILE *file, const u8 *buf, u32 count) {
     /* If write 0 bytes */
     if (count == 0) {
         return 0;
@@ -646,7 +650,7 @@ fs_write_err:
 }
 
 /* lseek */
-void fs_lseek(FILE *file, u32 new_loc) {
+void fs_lseek_fat(FILE *file, u32 new_loc) {
     u32 filesize = file->entry.attr.size;
 
     if (new_loc < filesize)
@@ -718,7 +722,7 @@ u32 fs_create_with_attr(u8 *filename, u8 attr) {
     u32 index;
     FILE file_creat;
     /* If file exists */
-    if (fs_open(&file_creat, filename) == 0)
+    if (fs_open_fat(&file_creat, filename) == 0)
         goto fs_creat_err;
 
     for (i = 255; i >= 0; i--)
@@ -738,7 +742,7 @@ u32 fs_create_with_attr(u8 *filename, u8 attr) {
         for (i = l1; i <= l2; i++)
             file_creat.path[i] = 0;
 
-        if (fs_find(&file_creat) == 1)
+        if (fs_find_fat(&file_creat) == 1)
             goto fs_creat_err;
 
         /* If path not found */
@@ -786,7 +790,7 @@ u32 fs_create_with_attr(u8 *filename, u8 attr) {
     for (i = 12; i < 32; i++)
         *(dir_data_buf[index].buf + empty_entry + i) = 0;
 
-    if (fs_fflush() == 1)
+    if (fs_fflush_fat() == 1)
         goto fs_creat_err;
 
     return 0;
@@ -794,7 +798,7 @@ fs_creat_err:
     return 1;
 }
 
-u32 fs_create(u8 *filename) {
+u32 fs_create_fat(u8 *filename) {
     return fs_create_with_attr(filename, 0x20);
 }
 

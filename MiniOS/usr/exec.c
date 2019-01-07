@@ -3,6 +3,7 @@
 #include <driver/ps2.h>
 #include <driver/vga.h>
 #include <zjunix/fs/fat.h>
+#include <zjunix/fs/ext2.h>
 #include <zjunix/pc.h>
 #include <zjunix/slab.h>
 #include <zjunix/utils.h>
@@ -14,7 +15,7 @@ const unsigned int CACHE_BLOCK_SIZE = 64;
 
 int exec(char* filename) {
     unsigned char buffer[512];
-    int result = fs_open(&file, filename);
+    int result = fs_open_fat(&file, filename);
     if (result != 0) {
         kernel_printf("File %s not exist\n", filename);
         return 1;
@@ -25,7 +26,7 @@ int exec(char* filename) {
     unsigned int j = 0;
     unsigned int ENTRY = (unsigned int)kmalloc(4096);
     for (j = 0; j < n; j++) {
-        fs_read(&file, buffer, CACHE_BLOCK_SIZE);
+        fs_read_fat(&file, buffer, CACHE_BLOCK_SIZE);
         kernel_memcpy((void*)(ENTRY + j * CACHE_BLOCK_SIZE), buffer, CACHE_BLOCK_SIZE);
         kernel_cache(ENTRY + j * CACHE_BLOCK_SIZE);
     }

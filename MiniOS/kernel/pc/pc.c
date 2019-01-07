@@ -228,7 +228,11 @@ Found:
 
 void task_files_delete(struct task_struct* task) {
     //可能有问题，不知道如何查看文件是否打开
-    fs_close(task->task_files);
+    /**
+     * 当然没问题了
+     * 文件打开了, 就关闭就好了
+     */
+    fs_close_fat(task->task_files);
     kfree(&(task->task_files));
 }
 
@@ -901,260 +905,260 @@ int vmprog(unsigned int argc, void *args) {
 //加载外部用户程序，并以之替换为当前进程的执行内容
 //由于目前仍进行到部分测试阶段,故该功能并未整合到操作系统中,并且函数内代码略显混乱
 int runuserprog(char* progname) {
-    // unsigned char buf[512];
-    unsigned int entry, stackptr;
-    unsigned int phy_entry;
-    unsigned int stack_entry, heap_entry;
-    int res, i;
-    unsigned int size, npage, nbuf;
-    struct mm_struct *newmm, *oldmm;
+//     // unsigned char buf[512];
+//     unsigned int entry, stackptr;
+//     unsigned int phy_entry;
+//     unsigned int stack_entry, heap_entry;
+//     int res, i;
+//     unsigned int size, npage, nbuf;
+//     struct mm_struct *newmm, *oldmm;
 
-    #ifdef TLB_DEBUG
-        unsigned int* debug_addr;
-        unsigned int debug_val;
-    #endif
+//     #ifdef TLB_DEBUG
+//         unsigned int* debug_addr;
+//         unsigned int debug_val;
+//     #endif
     
 
-    #ifdef VMA_DEBUG
-    kernel_printf("runuser: pid %d\n", current_task->pid);
-    #endif
-//load user program
-    // #ifdef TLB_DEBUG
-    //     kernel_printf("progname: %s  %d\n", progname, sizeof(FILE));
-    // #endif
-    // current_task->task_files = kmalloc(sizeof(FILE));
+//     #ifdef VMA_DEBUG
+//     kernel_printf("runuser: pid %d\n", current_task->pid);
+//     #endif
+// //load user program
+//     // #ifdef TLB_DEBUG
+//     //     kernel_printf("progname: %s  %d\n", progname, sizeof(FILE));
+//     // #endif
+//     // current_task->task_files = kmalloc(sizeof(FILE));
 
-    // if (current_task->task_files == 0) {
-    //     kernel_printf("runuserprog: task files allocated failed!\n");
-    //     goto error_0;
-    // }
-    // kernel_memset(current_task->task_files, 0, sizeof(FILE));
+//     // if (current_task->task_files == 0) {
+//     //     kernel_printf("runuserprog: task files allocated failed!\n");
+//     //     goto error_0;
+//     // }
+//     // kernel_memset(current_task->task_files, 0, sizeof(FILE));
     
-    // 调用VFS提供的打开接口
-    struct file * file;
-    file = vfs_open(progname, O_RDONLY, 0);
-    if (IS_ERR_OR_NULL(file)){
-        if ( PTR_ERR(file) == -ENOENT )
-            kernel_printf("File not found!\n");
-            return PTR_ERR(file);
-    }
+//     // 调用VFS提供的打开接口
+//     struct file * file;
+//     file = vfs_open(progname, O_RDONLY, 0);
+//     if (IS_ERR_OR_NULL(file)){
+//         if ( PTR_ERR(file) == -ENOENT )
+//             kernel_printf("File not found!\n");
+//             return PTR_ERR(file);
+//     }
 
-    // 接下来读取文件数据区的内容到buf
-    int base = 0;
-    int file_size = file->f_dentry->d_inode->i_size;
-    u8 *buf = (u8*) kmalloc (file_size + 1);
-    if ( vfs_read(file, buf, file_size, &base) != file_size )
-        return 1;
-    vfs_close(file);
-
-    
-    // #ifdef VMA_DEBUG
-    // kernel_printf("after read: %d  %s\n", current_task->pid, current_task->name);
-    // #endif
-
-
-    // res = fs_open(current_task->task_files, progname);
-    // if (res != 0) {
-    //     kernel_printf("runuserprog:File %s not exist\n", progname);
-    //     goto error_1;
-    // }
-
-    //create mm
-    newmm = mm_create();
-    if (newmm == 0) {
-        kernel_printf("runuserprog: mm_create create failed!\n");
-        goto error_2;
-    }
-    //
-
-    //load program
-    // size = get_entry_filesize(current_task->task_files->entry.data);
-    npage = file_size + (PAGE_SIZE - 1);
-    npage >>= PAGE_SHIFT;
-   phy_entry = (unsigned int) kmalloc(PAGE_SIZE * npage);
-    
-   // phy_entry = (unsigned int) kmalloc();
-
-    if (phy_entry == 0) {
-        kernel_printf("runuserprog: phy_entry allocated failed!\n");
-        goto error_3;
-    }
-
+//     // 接下来读取文件数据区的内容到buf
+//     int base = 0;
+//     int file_size = file->f_dentry->d_inode->i_size;
+//     u8 *buf = (u8*) kmalloc (file_size + 1);
+//     if ( vfs_read(file, buf, file_size, &base) != file_size )
+//         return 1;
+//     vfs_close(file);
 
     
+//     // #ifdef VMA_DEBUG
+//     // kernel_printf("after read: %d  %s\n", current_task->pid, current_task->name);
+//     // #endif
+
+
+//     // res = fs_open(current_task->task_files, progname);
+//     // if (res != 0) {
+//     //     kernel_printf("runuserprog:File %s not exist\n", progname);
+//     //     goto error_1;
+//     // }
+
+//     //create mm
+//     newmm = mm_create();
+//     if (newmm == 0) {
+//         kernel_printf("runuserprog: mm_create create failed!\n");
+//         goto error_2;
+//     }
+//     //
+
+//     //load program
+//     // size = get_entry_filesize(current_task->task_files->entry.data);
+//     npage = file_size + (PAGE_SIZE - 1);
+//     npage >>= PAGE_SHIFT;
+//    phy_entry = (unsigned int) kmalloc(PAGE_SIZE * npage);
+    
+//    // phy_entry = (unsigned int) kmalloc();
+
+//     if (phy_entry == 0) {
+//         kernel_printf("runuserprog: phy_entry allocated failed!\n");
+//         goto error_3;
+//     }
+
+
+    
 
 
 
-    //分配堆和栈
-    stack_entry = (unsigned int) kmalloc(PAGE_SIZE * 2);
-    if (stack_entry == 0) {
-        kernel_printf("runuserprog: stack allocated failed!\n");
-        goto error_3;
-    }
+//     //分配堆和栈
+//     stack_entry = (unsigned int) kmalloc(PAGE_SIZE * 2);
+//     if (stack_entry == 0) {
+//         kernel_printf("runuserprog: stack allocated failed!\n");
+//         goto error_3;
+//     }
 
-    /*
-    heap_entry = (unsigned int) kmalloc(PAGE_SIZE); //感觉这个暂时没用
-    if (heap_entry == 0) {
-        kernel_printf("runserprog: heap allocated failed!\n");
-        goto error_4;
-    }
-    */
+//     /*
+//     heap_entry = (unsigned int) kmalloc(PAGE_SIZE); //感觉这个暂时没用
+//     if (heap_entry == 0) {
+//         kernel_printf("runserprog: heap allocated failed!\n");
+//         goto error_4;
+//     }
+//     */
 
-    res = do_mapping(newmm->pgd, USER_CODE_ENTRY, npage, phy_entry, 0x0f);
-    if (res != 0) {
-        kernel_printf("runuserprog:mapping for code segment failed!\n");
-        goto error_5;
-    }
+//     res = do_mapping(newmm->pgd, USER_CODE_ENTRY, npage, phy_entry, 0x0f);
+//     if (res != 0) {
+//         kernel_printf("runuserprog:mapping for code segment failed!\n");
+//         goto error_5;
+//     }
 
-    res = do_one_mapping(newmm->pgd, USER_STACK_ENTRY - PAGE_SIZE, stack_entry, 0x0f);
-    if (res != 0) {
-        kernel_printf("runuserprog:mapping for stack segment failed!\n");
-        goto error_5;
-    }
-    // #ifdef VMA_DEBUG
-    // kernel_printf("Map stack done\n");
-    // #endif
+//     res = do_one_mapping(newmm->pgd, USER_STACK_ENTRY - PAGE_SIZE, stack_entry, 0x0f);
+//     if (res != 0) {
+//         kernel_printf("runuserprog:mapping for stack segment failed!\n");
+//         goto error_5;
+//     }
+//     // #ifdef VMA_DEBUG
+//     // kernel_printf("Map stack done\n");
+//     // #endif
 
-    /*
-    res = do_one_mapping(newmm->pgd, USER_HEAP_ENTRY, heap_entry, 0x0f);
-    if (res != 0) {
-        kernel_printf("runuserprog: mapping for heap segment failed!\n");
-        goto error_5;
-    }
-    */
+//     /*
+//     res = do_one_mapping(newmm->pgd, USER_HEAP_ENTRY, heap_entry, 0x0f);
+//     if (res != 0) {
+//         kernel_printf("runuserprog: mapping for heap segment failed!\n");
+//         goto error_5;
+//     }
+//     */
 
-    oldmm = current_task->mm;
-    current_task->mm = newmm;
+//     oldmm = current_task->mm;
+//     current_task->mm = newmm;
 
-    activate_mm(current_task);
+//     activate_mm(current_task);
 
-    // init_pgtable();
-    // #ifdef VMA_DEBUG
-    // kernel_printf("after activate:%d  %s\n", current_task->pid, current_task->name);
-    // #endif
+//     // init_pgtable();
+//     // #ifdef VMA_DEBUG
+//     // kernel_printf("after activate:%d  %s\n", current_task->pid, current_task->name);
+//     // #endif
  
-   // if (oldmm != 0)
-   //     mm_delete(oldmm);
+//    // if (oldmm != 0)
+//    //     mm_delete(oldmm);
     
-    entry = USER_CODE_ENTRY;
-    stackptr = USER_STACK_ENTRY - 32; //in case there is some special case
+//     entry = USER_CODE_ENTRY;
+//     stackptr = USER_STACK_ENTRY - 32; //in case there is some special case
 
-    // nbuf = npage * ((PAGE_SIZE + 511) / 512);
-    // for (i = 0; i < nbuf; i++) {
-    //     fs_read(current_task->task_files, buf, 512);
-    //     kernel_memcpy((void*)(entry + i * 512), buf, 512);
-    //     kernel_memcpy((void*)(phy_entry + i * 512), buf, 512);
-    // }
+//     // nbuf = npage * ((PAGE_SIZE + 511) / 512);
+//     // for (i = 0; i < nbuf; i++) {
+//     //     fs_read(current_task->task_files, buf, 512);
+//     //     kernel_memcpy((void*)(entry + i * 512), buf, 512);
+//     //     kernel_memcpy((void*)(phy_entry + i * 512), buf, 512);
+//     // }
     
-    int CACHE_BLOCK_SIZE = 64;
-    unsigned int n = file_size / CACHE_BLOCK_SIZE + 1;
-    for (i = 0; i < n; i++) {
-        // fs_read(current_task->task_files, buf, CACHE_BLOCK_SIZE);
-        // kernel_memcpy((void*)(phy_entry + i * CACHE_BLOCK_SIZE), buf + i * CACHE_BLOCK_SIZE, CACHE_BLOCK_SIZE);
-        // kernel_cache(phy_entry + i * CACHE_BLOCK_SIZE);
-        kernel_memcpy((void*)(entry + i * CACHE_BLOCK_SIZE), buf + i * CACHE_BLOCK_SIZE, CACHE_BLOCK_SIZE);
-        kernel_cache(entry + i * CACHE_BLOCK_SIZE);
-    }
+//     int CACHE_BLOCK_SIZE = 64;
+//     unsigned int n = file_size / CACHE_BLOCK_SIZE + 1;
+//     for (i = 0; i < n; i++) {
+//         // fs_read(current_task->task_files, buf, CACHE_BLOCK_SIZE);
+//         // kernel_memcpy((void*)(phy_entry + i * CACHE_BLOCK_SIZE), buf + i * CACHE_BLOCK_SIZE, CACHE_BLOCK_SIZE);
+//         // kernel_cache(phy_entry + i * CACHE_BLOCK_SIZE);
+//         kernel_memcpy((void*)(entry + i * CACHE_BLOCK_SIZE), buf + i * CACHE_BLOCK_SIZE, CACHE_BLOCK_SIZE);
+//         kernel_cache(entry + i * CACHE_BLOCK_SIZE);
+//     }
 
-    kfree(buf);
+//     kfree(buf);
 
-   // fs_read(current_task->task_files, buf, 64);
-   //     kernel_memcpy((void*)(entry + i * 512), buf, 512);
-   // kernel_memcpy((void*)(phy_entry), buf, 64);
-    //kernel_cache(phy_entry);
+//    // fs_read(current_task->task_files, buf, 64);
+//    //     kernel_memcpy((void*)(entry + i * 512), buf, 512);
+//    // kernel_memcpy((void*)(phy_entry), buf, 64);
+//     //kernel_cache(phy_entry);
      
  
-    #ifdef TLB_DEBUG
+//     #ifdef TLB_DEBUG
     
-        kernel_printf("userspace-- %x  %x\n", entry, stackptr);
-        kernel_printf("entry: %x\n", phy_entry);
-        debug_addr = (unsigned int*)phy_entry;
-        for (i = 0; i < 8; i++) {
-            kernel_printf("%d: %x\n", i, *(debug_addr + i));
-        }
+//         kernel_printf("userspace-- %x  %x\n", entry, stackptr);
+//         kernel_printf("entry: %x\n", phy_entry);
+//         debug_addr = (unsigned int*)phy_entry;
+//         for (i = 0; i < 8; i++) {
+//             kernel_printf("%d: %x\n", i, *(debug_addr + i));
+//         }
 
-        // kernel_getchar();
-        debug_addr = (unsigned int*)entry;
-        kernel_printf("user:\n");
-        for (i = 0; i < 8; i++) {
-            debug_val = *(debug_addr + i);
-            kernel_printf("%x: %x $$$$$  \n", (debug_addr + i), debug_val);
-            // *(debug_addr + i) = i * i;
-            // debug_val = *(debug_addr + i);
-            // kernel_printf("%x: %x\n", (debug_addr + i), debug_val);
-        }
+//         // kernel_getchar();
+//         debug_addr = (unsigned int*)entry;
+//         kernel_printf("user:\n");
+//         for (i = 0; i < 8; i++) {
+//             debug_val = *(debug_addr + i);
+//             kernel_printf("%x: %x $$$$$  \n", (debug_addr + i), debug_val);
+//             // *(debug_addr + i) = i * i;
+//             // debug_val = *(debug_addr + i);
+//             // kernel_printf("%x: %x\n", (debug_addr + i), debug_val);
+//         }
 
-        // kernel_printf("entry again: %x\n", phy_entry);
-        // debug_addr = (unsigned int*)phy_entry;
-        // for (i = 0; i < 8; i++) {
-        //     kernel_printf("%d: %x\n", i, *(debug_addr + i));
-        // }
-        // kernel_getchar();
-        kernel_printf("count: %d\n", count_2);
+//         // kernel_printf("entry again: %x\n", phy_entry);
+//         // debug_addr = (unsigned int*)phy_entry;
+//         // for (i = 0; i < 8; i++) {
+//         //     kernel_printf("%d: %x\n", i, *(debug_addr + i));
+//         // }
+//         // kernel_getchar();
+//         kernel_printf("count: %d\n", count_2);
   
-    #endif
+//     #endif
 
-    // while(1)
-    //     ;
+//     // while(1)
+//     //     ;
    
-    // asm volatile(
-    //     "move  $t0, %0\n\t"
-    //     "jalr  $t0\n\t"
-    //     :
-    //     :"r" (entry+4)
-    // );
-//    disable_interrupts();
+//     // asm volatile(
+//     //     "move  $t0, %0\n\t"
+//     //     "jalr  $t0\n\t"
+//     //     :
+//     //     :"r" (entry+4)
+//     // );
+// //    disable_interrupts();
     
-    // int (*f)() = (int(*)())(entry);
-    // res = f();
-    // enable_interrupts();
+//     // int (*f)() = (int(*)())(entry);
+//     // res = f();
+//     // enable_interrupts();
 
-    enter_new_pc(entry, stackptr);
-    asm volatile(
-        "move   $sp, %0\n\t"
-        "addiu  $sp, $sp, 4096\n\t"
-        :
-        :"r" (current_task)
-    );
-    kernel_printf("return from user program!\n");
+//     enter_new_pc(entry, stackptr);
+//     asm volatile(
+//         "move   $sp, %0\n\t"
+//         "addiu  $sp, $sp, 4096\n\t"
+//         :
+//         :"r" (current_task)
+//     );
+//     kernel_printf("return from user program!\n");
 
-    // unsigned int* pgd = current_task->mm->pgd;
-    // unsigned int pde, pte;
-    // unsigned int* pde_ptr;
-    // int j;
+//     // unsigned int* pgd = current_task->mm->pgd;
+//     // unsigned int pde, pte;
+//     // unsigned int* pde_ptr;
+//     // int j;
 
-    // for (i = 0; i < 1024; i++) {
-    //     pde = pgd[i];
-    //     pde &= PAGE_MASK;
+//     // for (i = 0; i < 1024; i++) {
+//     //     pde = pgd[i];
+//     //     pde &= PAGE_MASK;
        
-    //     if (pde == 0)  //不存在二级页表
-    //         continue;
-    //     kernel_printf("pde: %x\n", pde);
-    //     pde_ptr = (unsigned int*)pde;
-    //     for (j = 0; j < 1024; j++) {
-    //         pte = pde_ptr[j];
-    //         pte &= PAGE_MASK;
-    //         if (pte != 0) {
-    //             kernel_printf("\tpte: %x\n", pte);
-    //         }
-    //     }
-    // }
+//     //     if (pde == 0)  //不存在二级页表
+//     //         continue;
+//     //     kernel_printf("pde: %x\n", pde);
+//     //     pde_ptr = (unsigned int*)pde;
+//     //     for (j = 0; j < 1024; j++) {
+//     //         pte = pde_ptr[j];
+//     //         pte &= PAGE_MASK;
+//     //         if (pte != 0) {
+//     //             kernel_printf("\tpte: %x\n", pte);
+//     //         }
+//     //     }
+//     // }
 
-    pc_exit(0);
+//     pc_exit(0);
 
-error_5:
-/*
-    kfree(heap_entry);
-*/
-error_4:
-    kfree((void*)stack_entry);
-error_3:
-    mm_delete(newmm);
-error_2:
-    // fs_close(current_task->task_files);
-error_1:
-    // kfree(current_task->task_files);
-    // current_task->task_files = 0;
-error_0:
+// error_5:
+// /*
+//     kfree(heap_entry);
+// */
+// error_4:
+//     kfree((void*)stack_entry);
+// error_3:
+//     mm_delete(newmm);
+// error_2:
+//     // fs_close(current_task->task_files);
+// error_1:
+//     // kfree(current_task->task_files);
+//     // current_task->task_files = 0;
+// error_0:
     return 1;
 }

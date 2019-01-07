@@ -7,7 +7,8 @@
 #include <zjunix/bootmm.h>
 #include <zjunix/buddy.h>
 #include <zjunix/fs/fat.h>
-#include <zjunix/vfs/vfs.h>
+// #include <zjunix/vfs/vfs.h>
+#include <zjunix/fs/ext2.h>
 #include <zjunix/log.h>
 #include <zjunix/pc.h>
 #include <zjunix/slab.h>
@@ -20,11 +21,12 @@
 void machine_info() {
     int row;
     int col;
-    kernel_printf("\n%s\n", "412-UNIX V1.0");
+    kernel_printf("\n%s\n", "83+666-OS");
     row = cursor_row;
     col = cursor_col;
     cursor_row = 29;
-    kernel_printf("%s", "Created by Dorm 412 Block 32, Yuquan Campus, Zhejiang University.");
+    kernel_printf("%s\n", "Author 83+666 (C) Copyright 2019-01-01");
+    kernel_printf("%s\n", "Thanks to ZJUNIX & TAs");
     cursor_row = row;
     cursor_col = col;
     kernel_set_cursor();
@@ -62,19 +64,17 @@ void init_kernel() {
     init_slab();
     log(LOG_OK, "Slab.");
     log(LOG_END, "Memory Modules.");
-#ifndef VFS_DEBUG
-    // File system
-    log(LOG_START, "File System.");
-    init_fs();
-    log(LOG_END, "File System.");
+#ifdef FAT_DEBUG
+    // FAT File system
+    log(LOG_START, "FAT File System.");
+    init_fs_fat();
+    log(LOG_END, "FAT File System.");
 #endif
-#ifdef VFS_DEBUG
-    // Virtual file system
-    log(LOG_START, "Virtual file System.");
-    if(!init_vfs())
-        log(LOG_END, "Virtual file System.");
-    else
-        log(LOG_FAIL, "Virtual file System.");
+#ifdef EXT2_DEBUG
+    // EXT2 File system
+    log(LOG_START, "EXT2 File System.");
+    init_fs_ext2();
+    log(LOG_END, "EXT2 File System.");    
 #endif
     // System call
     log(LOG_START, "System Calls.");

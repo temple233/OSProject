@@ -2,7 +2,6 @@
 #define _FAT_H
 
 #include <zjunix/fs/fat.h>
-#include <zjunix/vfs/vfs.h>
 
 // #ifndef VFS_DEBUG
 // #define PAGE_SHIFT 12
