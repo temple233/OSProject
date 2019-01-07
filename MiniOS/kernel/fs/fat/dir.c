@@ -1,7 +1,6 @@
 #include "dir.h"
 #include <zjunix/fs/fscache.h>
 #include "fat.h"
-#include "utils.h"
 
 /* used to find or create a directory entry */
 #define DIR_DATA_BUF_NUM 4
@@ -60,7 +59,7 @@ fs_open_dir_err:
 }
 
 /* read dir */
-u32 fs_read_dir(FS_FAT_DIR *dir, u8 *buf) {
+u32 fs_read_dir_fat(FS_FAT_DIR *dir, u8 *buf) {
     u32 sec;
     u32 i;
     u32 index;

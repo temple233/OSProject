@@ -1,4 +1,3 @@
-#include "fat_utils.h"
 #include <driver/sd.h>
 #include "fat/fat.h"
 
@@ -68,10 +67,10 @@ u32 fs_sec2dataclus(u32 sec) {
 }
 
 
-u32 get_entry_filesize(u8 *entry) {
+u32 get_entry_filesize_fat(u8 *entry) {
     return get_u32(entry + 28);
 }
 
-u32 get_entry_attr(u8 *entry) {
+u32 get_entry_attr_fat(u8 *entry) {
     return entry[11];
 }

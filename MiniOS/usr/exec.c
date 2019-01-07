@@ -20,7 +20,7 @@ int exec(char* filename) {
         kernel_printf("File %s not exist\n", filename);
         return 1;
     }
-    unsigned int size = get_entry_filesize(file.entry.data);
+    unsigned int size = get_entry_filesize_fat(file.entry.data);
     unsigned int n = size / CACHE_BLOCK_SIZE + 1;
     unsigned int i = 0;
     unsigned int j = 0;

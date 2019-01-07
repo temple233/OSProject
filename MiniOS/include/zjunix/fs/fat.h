@@ -131,7 +131,7 @@ unsigned long fs_mkdir_fat(unsigned char *filename);
 
 u32 fs_open_dir_fat(FS_FAT_DIR *dir, u8 *filename);
 
-u32 fs_read_dir(FS_FAT_DIR *dir, u8 *buf);
+u32 fs_read_dir_fat(FS_FAT_DIR *dir, u8 *buf);
 
 unsigned long fs_rm_fat(unsigned char *filename);
 

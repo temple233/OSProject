@@ -3,14 +3,14 @@
 
 #include "../type.h"
 
-/* 4k byte buffer */
+/* 4 KB buffer */
 typedef struct buf_4k {
     unsigned char buf[4096];
     unsigned long cur;
     unsigned long state;
 } BUF_4K;
 
-/* 512 byte buffer */
+/* 512 B buffer */
 typedef struct buf_512 {
     unsigned char buf[512];
     unsigned long cur;

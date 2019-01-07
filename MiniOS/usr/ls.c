@@ -59,13 +59,13 @@ int ls(char *para) {
     p_len = strlen(p);
     next = each_param(p, pwd, 0, ' ');
 
-    if (fs_open_dir(&dir, pwd)) {
+    if (fs_open_dir_fat(&dir, pwd)) {
         kernel_printf("open dir(%s) failed : No such directory!\n", pwd);
         return 1;
     }
 
 readdir:
-    r = fs_read_dir(&dir, (unsigned char *)&entry);
+    r = fs_read_dir_fat(&dir, (unsigned char *)&entry);
     if (1 != r) {
         if (-1 == r) {
             kernel_printf("\n");

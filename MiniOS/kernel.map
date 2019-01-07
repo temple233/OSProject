@@ -93,21 +93,33 @@ Discarded input sections
  .reginfo       0x0000000000000000       0x18 kernel/vm/tlb.o
  .MIPS.abiflags
                 0x0000000000000000       0x18 kernel/vm/tlb.o
+ .reginfo       0x0000000000000000       0x18 kernel/fs/ext2/ext2.o
+ .MIPS.abiflags
+                0x0000000000000000       0x18 kernel/fs/ext2/ext2.o
+ .reginfo       0x0000000000000000       0x18 kernel/fs/ext2/usr.o
+ .MIPS.abiflags
+                0x0000000000000000       0x18 kernel/fs/ext2/usr.o
+ .reginfo       0x0000000000000000       0x18 kernel/fs/debug.o
+ .MIPS.abiflags
+                0x0000000000000000       0x18 kernel/fs/debug.o
+ .reginfo       0x0000000000000000       0x18 kernel/fs/ext2_utils.o
+ .MIPS.abiflags
+                0x0000000000000000       0x18 kernel/fs/ext2_utils.o
  .reginfo       0x0000000000000000       0x18 kernel/fs/fat/dir.o
  .MIPS.abiflags
                 0x0000000000000000       0x18 kernel/fs/fat/dir.o
- .reginfo       0x0000000000000000       0x18 kernel/fs/fat/debug.o
- .MIPS.abiflags
-                0x0000000000000000       0x18 kernel/fs/fat/debug.o
  .reginfo       0x0000000000000000       0x18 kernel/fs/fat/fat.o
  .MIPS.abiflags
                 0x0000000000000000       0x18 kernel/fs/fat/fat.o
  .reginfo       0x0000000000000000       0x18 kernel/fs/fat/usr.o
  .MIPS.abiflags
                 0x0000000000000000       0x18 kernel/fs/fat/usr.o
- .reginfo       0x0000000000000000       0x18 kernel/fs/fat/utils.o
+ .reginfo       0x0000000000000000       0x18 kernel/fs/fat_utils.o
  .MIPS.abiflags
-                0x0000000000000000       0x18 kernel/fs/fat/utils.o
+                0x0000000000000000       0x18 kernel/fs/fat_utils.o
+ .reginfo       0x0000000000000000       0x18 kernel/fs/utils.o
+ .MIPS.abiflags
+                0x0000000000000000       0x18 kernel/fs/utils.o
  .reginfo       0x0000000000000000       0x18 kernel/fs/fscache/fscache.o
  .MIPS.abiflags
                 0x0000000000000000       0x18 kernel/fs/fscache/fscache.o
@@ -356,7 +368,7 @@ Linker script and memory map
  *(.plt)
                 0x0000000080000000                . = 0x80000000
 
-.text           0x0000000080000000    0x1953c
+.text           0x0000000080000000    0x19130
                 0x0000000080000000                _ftext = .
  *(.text)
  .text          0x0000000080000000     0x1014 arch/mips32/start.o
@@ -429,293 +441,301 @@ Linker script and memory map
                 0x0000000080003ec4                is_in_vma
  .text          0x0000000080003f44       0x24 kernel/vm/tlb.o
                 0x0000000080003f44                set_tlb_asid
- .text          0x0000000080003f68      0x610 kernel/fs/fat/dir.o
-                0x0000000080003f68                fs_open_dir
-                0x00000000800041b4                fs_read_dir
- .text          0x0000000080004578        0x0 kernel/fs/fat/debug.o
- .text          0x0000000080004578     0x2d2c kernel/fs/fat/fat.o
-                0x00000000800049e8                init_fs_fat
-                0x0000000080004a60                write_fat_sector
-                0x0000000080004c38                read_fat_sector
-                0x0000000080004e0c                fs_next_slash
-                0x00000000800050a4                fs_cmp_filename
-                0x000000008000512c                fs_find_fat
-                0x0000000080005630                fs_open_fat
-                0x00000000800057c4                fs_fflush_fat
-                0x0000000080005938                fs_close_fat
-                0x0000000080005adc                fs_read_fat
-                0x0000000080005e9c                fs_next_free
-                0x0000000080005f6c                fs_alloc
-                0x0000000080006154                fs_write_fat
-                0x000000008000678c                fs_lseek_fat
-                0x00000000800067f8                fs_find_empty_entry
-                0x0000000080006b64                fs_create_with_attr
-                0x0000000080006fc0                fs_create_fat
-                0x0000000080006ffc                get_filename
- .text          0x00000000800072a4      0x7f0 kernel/fs/fat/usr.o
-                0x00000000800072a4                fs_rm_fat
-                0x00000000800073e8                fs_mv_fat
-                0x00000000800075f8                fs_mkdir_fat
-                0x000000008000799c                fs_cat_fat
- .text          0x0000000080007a94      0x468 kernel/fs/fat/utils.o
-                0x0000000080007a94                fs_wa
-                0x0000000080007af0                get_entry_filesize
-                0x0000000080007b30                get_entry_attr
-                0x0000000080007b60                get_start_cluster
-                0x0000000080007b9c                get_fat_entry_value
-                0x0000000080007c6c                fs_modify_fat
-                0x0000000080007db0                cluster_to_fat_entry
-                0x0000000080007e2c                fs_dataclus2sec
-                0x0000000080007e94                fs_sec2dataclus
- .text          0x0000000080007efc      0xcd8 kernel/fs/fscache/fscache.o
-                0x0000000080007efc                fs_victim_4k
-                0x0000000080008150                fs_write_4k
-                0x0000000080008208                fs_read_4k
-                0x000000008000842c                fs_clr_4k
-                0x0000000080008580                fs_victim_512
-                0x00000000800087d4                fs_write_512
-                0x0000000080008880                fs_read_512
-                0x0000000080008a94                fs_clr_512
- .text          0x0000000080008bd4      0x2c0 kernel/pc/page.o
-                0x0000000080008bd4                do_one_mapping
-                0x0000000080008ddc                do_mapping
- .text          0x0000000080008e94      0x130 kernel/pc/switch_ex.o
-                0x0000000080008e94                switch_ex
-                0x0000000080008f30                switch_wa
- .text          0x0000000080008fc4       0x1c kernel/pc/enter_user_pc.o
-                0x0000000080008fc4                enter_new_pc
- .text          0x0000000080008fe0     0x2300 kernel/pc/pc.o
-                0x0000000080009234                activate_mm
-                0x0000000080009274                waitpid
-                0x00000000800093fc                wakeup_parent
-                0x0000000080009518                add_wait
-                0x000000008000955c                add_exited
-                0x00000000800095a0                add_task
-                0x00000000800095e4                add_sched
-                0x0000000080009628                add_sched_back
-                0x00000000800096b4                remove_task
-                0x0000000080009708                remove_exited
-                0x000000008000975c                remove_sched
-                0x00000000800097b0                find_in_tasks
-                0x0000000080009834                find_in_sched
-                0x0000000080009960                task_files_delete
-                0x0000000080009bdc                init_pc_list
-                0x0000000080009cb8                init_pc
-                0x0000000080009dd8                exec_from_kernel
-                0x0000000080009ec8                runprog
-                0x0000000080009ff8                task_create
-                0x000000008000a298                pc_kill
-                0x000000008000a420                clear_exited
-                0x000000008000a4cc                pc_exit
-                0x000000008000a628                pc_schedule
-                0x000000008000a6f8                find_next_task
-                0x000000008000a870                find_in_sched_back
-                0x000000008000a940                print_sched
-                0x000000008000aa64                print_task
-                0x000000008000aae4                print_exited
-                0x000000008000ab64                print_struct_task
-                0x000000008000abd8                print_wait
-                0x000000008000ac54                vmprog22
-                0x000000008000ad04                vmprog
-                0x000000008000ae00                runuserprog
- .text          0x000000008000b2e0      0x320 kernel/pc/pid.o
-                0x000000008000b2e0                init_pid
-                0x000000008000b354                pid_check
-                0x000000008000b3e8                pid_alloc
-                0x000000008000b530                pid_free
- .text          0x000000008000b600      0x148 kernel/lock/lock.o
-                0x000000008000b63c                init_lock
-                0x000000008000b684                lockup
-                0x000000008000b6e0                unlock
- .text          0x000000008000b748      0xb84 kernel/vfs/ext2/ext2_super_operations.o
-                0x000000008000b838                ext2_delete_inode
-                0x000000008000c108                ext2_write_inode
- .text          0x000000008000c2cc      0x8e0 kernel/vfs/ext2/ext2_inode_operations.o
-                0x000000008000c3e4                ext2_inode_lookup
-                0x000000008000c860                ext2_create
-                0x000000008000c894                ext2_fill_inode
-                0x000000008000c9d4                ext2_inode_find_from_ram_to_disk
- .text          0x000000008000cbac      0x244 kernel/vfs/ext2/ext2_utils.o
-                0x000000008000cbac                ext2_check_inode_bitmap
-                0x000000008000cccc                ext2_group_base_sect
- .text          0x000000008000cdf0        0x0 kernel/vfs/ext2/ext2_dentry_operations.o
- .text          0x000000008000cdf0      0x7ac kernel/vfs/ext2/ext2_init.o
-                0x000000008000cee0                init_ext2
- .text          0x000000008000d59c      0x580 kernel/vfs/ext2/ext2_file_operations.o
-                0x000000008000d68c                ext2_readdir
- .text          0x000000008000db1c      0x54c kernel/vfs/ext2/ext2_address_space_operations.o
-                0x000000008000db1c                ext2_readpage
-                0x000000008000dc38                ext2_writepage
-                0x000000008000dcf4                ext2_bmap
- .text          0x000000008000e068      0xe2c kernel/vfs/vfscache.o
-                0x000000008000e20c                init_cache
-                0x000000008000e394                cache_init
-                0x000000008000e474                cache_is_full
-                0x000000008000e4b4                dcache_look_up
-                0x000000008000e650                dcache_add
-                0x000000008000e72c                dcache_put_LRU
-                0x000000008000e8f8                pcache_look_up
-                0x000000008000ea70                pcache_add
-                0x000000008000eb4c                pcache_put_LRU
-                0x000000008000ec1c                pcache_write_back
-                0x000000008000ec70                dget
-                0x000000008000ecac                dput
-                0x000000008000ece8                release_dentry
-                0x000000008000ed24                release_inode
-                0x000000008000ed60                release_page
-                0x000000008000edb0                __intHash
-                0x000000008000edf0                __stringHash
- .text          0x000000008000ee94      0x2bc kernel/vfs/mount.o
-                0x000000008000ee94                mount_ext2
-                0x000000008000efd0                follow_mount
-                0x000000008000f0ac                lookup_mnt
- .text          0x000000008000f150      0x30c kernel/vfs/vfs_init.o
-                0x000000008000f150                init_vfs
-                0x000000008000f320                vfs_read_MBR
- .text          0x000000008000f45c      0x930 kernel/vfs/vfs_primitives/open.o
-                0x000000008000f574                vfs_open
-                0x000000008000f604                open_namei
-                0x000000008000f658                path_lookup
-                0x000000008000f708                link_path_walk
-                0x000000008000f868                real_lookup
-                0x000000008000f930                dentry_open
-                0x000000008000fa3c                vfs_close
-                0x000000008000faa0                d_alloc
- .text          0x000000008000fd8c      0xbb0 kernel/vfs/vfs_primitives/read_write.o
-                0x000000008000fe7c                vfs_read
-                0x000000008000ff30                vfs_write
-                0x000000008000ffe4                generic_file_read
-                0x0000000080010420                generic_file_write
-                0x000000008001087c                generic_file_flush
- .text          0x000000008001093c      0x5d8 kernel/vfs/usr.o
-                0x00000000800109b4                vfs_cat
-                0x0000000080010b14                vfs_cd
-                0x0000000080010bb8                vfs_ls
-                0x0000000080010e40                vfs_rm
- .text          0x0000000080010f14      0x448 kernel/vfs/utils.o
-                0x0000000080010f14                read_block
-                0x0000000080010f5c                write_block
-                0x0000000080010fa4                get_u16
-                0x0000000080010ff4                get_u32
-                0x0000000080011060                set_u16
-                0x00000000800110bc                set_u32
-                0x0000000080011140                generic_compare_filename
-                0x0000000080011204                get_bit
-                0x0000000080011270                set_bit
-                0x00000000800112e0                reset_bit
- .text          0x000000008001135c      0x7a0 kernel/vfs/fat32/fat32_inode_operations.o
-                0x000000008001144c                fat32_inode_lookup
-                0x0000000080011ac8                fat32_create
- .text          0x0000000080011afc        0x0 kernel/vfs/fat32/fat32_dentry_operations.o
- .text          0x0000000080011afc      0x828 kernel/vfs/fat32/fat32_utils.o
-                0x0000000080011afc                fat32_convert_filename
-                0x0000000080012264                read_fat
- .text          0x0000000080012324      0x9c0 kernel/vfs/fat32/fat32_init.o
-                0x0000000080012414                init_fat32
- .text          0x0000000080012ce4      0x5d0 kernel/vfs/fat32/fat32_file_operations.o
-                0x0000000080012dd4                fat32_readdir
- .text          0x00000000800132b4      0x1e8 kernel/vfs/fat32/fat32_address_space_operations.o
-                0x00000000800132b4                fat32_readpage
-                0x00000000800133b4                fat32_writepage
-                0x000000008001345c                fat32_bmap
- .text          0x000000008001349c      0x824 kernel/vfs/fat32/fat32_super_operations.o
-                0x000000008001358c                fat32_delete_inode
-                0x00000000800138d0                fat32_write_inode
- .text          0x0000000080013cc0      0xbf4 kernel/mm/myslab.o
-                0x0000000080013ee4                init_kmem_cpu
-                0x0000000080013f10                init_kmem_node
-                0x0000000080013f60                init_each_slab
-                0x0000000080013fe4                init_slab
-                0x000000008001407c                format_slabpage
-                0x0000000080014130                slab_alloc
-                0x00000000800143b8                slab_free
-                0x0000000080014574                get_slab
-                0x0000000080014684                kmalloc
-                0x00000000800146fc                phy_kmalloc
-                0x00000000800147f4                kfree
- .text          0x00000000800148b4      0xbfc kernel/mm/mybuddy.o
-                0x0000000080014a6c                buddy_info
-                0x0000000080014b48                init_pages
-                0x0000000080014c68                init_buddy
-                0x0000000080014f1c                __free_pages
-                0x00000000800151a8                __alloc_pages
-                0x0000000080015390                alloc_pages
-                0x0000000080015454                free_pages
- .text          0x00000000800154b0      0xf98 kernel/mm/mybootmm.o
-                0x00000000800154b0                set_mminfo
-                0x0000000080015504                insert_mminfo
-                0x000000008001580c                split_mminfo
-                0x00000000800159e4                remove_mminfo
-                0x0000000080015ae0                init_bootmm
-                0x0000000080015c30                set_maps
-                0x0000000080015ca8                find_pages
-                0x0000000080015e90                bootmm_alloc_pages
-                0x0000000080015fdc                bootmap_info
-                0x00000000800160f0                bootmm_free_pages
- .text          0x0000000080016448      0x330 kernel/init.o
-                0x0000000080016448                machine_info
-                0x00000000800164ec                create_startup_process
-                0x0000000080016578                init_kernel
- .text          0x0000000080016778       0x5c utils/assert.o
-                0x0000000080016778                assert
- .text          0x00000000800167d4      0x268 utils/log.o
-                0x00000000800167d4                log_level_adv
-                0x0000000080016810                log_level_rec
-                0x0000000080016848                log
-                0x00000000800169c8                step
-                0x0000000080016a18                step_reset
- .text          0x0000000080016a3c      0x38c utils/utils.o
-                0x0000000080016a3c                kernel_memcpy
-                0x0000000080016ac0                kernel_memset
-                0x0000000080016af4                kernel_memset_word
-                0x0000000080016b54                kernel_strcmp
-                0x0000000080016bdc                kernel_strcpy
-                0x0000000080016c38                pow
-                0x0000000080016cb4                kernel_cache
-                0x0000000080016cf8                kernel_serial_puts
-                0x0000000080016d50                kernel_serial_putc
-                0x0000000080016d88                is_bound
- .text          0x0000000080016dc8      0x1d0 usr/exec.o
-                0x0000000080016dc8                exec
- .text          0x0000000080016f98     0x1370 usr/myvi.o
-                0x0000000080017010                myvi_init
-                0x000000008001708c                to_lower_case
-                0x00000000800170ec                mystrcpy
-                0x0000000080017148                load_file
-                0x0000000080017360                save_file
-                0x000000008001744c                insert_key
-                0x000000008001751c                delete_key
-                0x00000000800175b0                put_char_on_screen
-                0x000000008001761c                screen_flush
-                0x0000000080017a24                get_key
-                0x0000000080017a58                page_location_last_line
-                0x0000000080017af4                page_location_next_line
-                0x0000000080017b88                cursor_prev_line
-                0x0000000080017c5c                cursor_next_line
-                0x0000000080017cf4                do_command_mode
-                0x0000000080017f10                do_insert_mode
-                0x0000000080018024                do_last_line_mode
-                0x00000000800181f0                myvi
- .text          0x0000000080018308      0x378 usr/ls.o
-                0x0000000080018308                cut_front_blank
-                0x00000000800183dc                strlen
-                0x0000000080018434                each_param
-                0x00000000800184f4                ls
- .text          0x0000000080018680      0xebc usr/ps.o
-                0x0000000080018680                test_proc
-                0x00000000800186f4                testMem
-                0x0000000080018808                testMem2
-                0x000000008001882c                test_sync
-                0x00000000800188d8                sync_demo_create
-                0x00000000800188fc                ps
-                0x0000000080018b48                parse_cmd
+ .text          0x0000000080003f68       0x24 kernel/fs/ext2/ext2.o
+                0x0000000080003f68                init_fs_ext2
+ .text          0x0000000080003f8c        0x0 kernel/fs/ext2/usr.o
+ .text          0x0000000080003f8c        0x0 kernel/fs/debug.o
+ .text          0x0000000080003f8c       0x7c kernel/fs/ext2_utils.o
+                0x0000000080003f8c                get_filename_ext2
+                0x0000000080003fb8                get_entry_filesize_ext2
+                0x0000000080003fe0                get_entry_attr_ext2
+ .text          0x0000000080004008      0x640 kernel/fs/fat/dir.o
+                0x0000000080004008                fs_open_dir_fat
+                0x0000000080004264                fs_read_dir_fat
+ .text          0x0000000080004648     0x2d2c kernel/fs/fat/fat.o
+                0x0000000080004ab8                init_fs_fat
+                0x0000000080004b30                write_fat_sector
+                0x0000000080004d08                read_fat_sector
+                0x0000000080004edc                fs_next_slash
+                0x0000000080005174                fs_cmp_filename
+                0x00000000800051fc                fs_find_fat
+                0x0000000080005700                fs_open_fat
+                0x0000000080005894                fs_fflush_fat
+                0x0000000080005a08                fs_close_fat
+                0x0000000080005bac                fs_read_fat
+                0x0000000080005f6c                fs_next_free
+                0x000000008000603c                fs_alloc
+                0x0000000080006224                fs_write_fat
+                0x000000008000685c                fs_lseek_fat
+                0x00000000800068c8                fs_find_empty_entry
+                0x0000000080006c34                fs_create_with_attr
+                0x0000000080007090                fs_create_fat
+                0x00000000800070cc                get_filename
+ .text          0x0000000080007374      0x7f0 kernel/fs/fat/usr.o
+                0x0000000080007374                fs_rm_fat
+                0x00000000800074b8                fs_mv_fat
+                0x00000000800076c8                fs_mkdir_fat
+                0x0000000080007a6c                fs_cat_fat
+ .text          0x0000000080007b64      0x40c kernel/fs/fat_utils.o
+                0x0000000080007b64                get_start_cluster
+                0x0000000080007ba0                get_fat_entry_value
+                0x0000000080007c70                fs_modify_fat
+                0x0000000080007db4                cluster_to_fat_entry
+                0x0000000080007e30                fs_dataclus2sec
+                0x0000000080007e98                fs_sec2dataclus
+                0x0000000080007f00                get_entry_filesize_fat
+                0x0000000080007f40                get_entry_attr_fat
+ .text          0x0000000080007f70       0x5c kernel/fs/utils.o
+                0x0000000080007f70                fs_wa
+ .text          0x0000000080007fcc      0xcd8 kernel/fs/fscache/fscache.o
+                0x0000000080007fcc                fs_victim_4k
+                0x0000000080008220                fs_write_4k
+                0x00000000800082d8                fs_read_4k
+                0x00000000800084fc                fs_clr_4k
+                0x0000000080008650                fs_victim_512
+                0x00000000800088a4                fs_write_512
+                0x0000000080008950                fs_read_512
+                0x0000000080008b64                fs_clr_512
+ .text          0x0000000080008ca4      0x2c0 kernel/pc/page.o
+                0x0000000080008ca4                do_one_mapping
+                0x0000000080008eac                do_mapping
+ .text          0x0000000080008f64      0x130 kernel/pc/switch_ex.o
+                0x0000000080008f64                switch_ex
+                0x0000000080009000                switch_wa
+ .text          0x0000000080009094       0x1c kernel/pc/enter_user_pc.o
+                0x0000000080009094                enter_new_pc
+ .text          0x00000000800090b0     0x1e2c kernel/pc/pc.o
+                0x00000000800092a4                activate_mm
+                0x00000000800092e8                waitpid
+                0x0000000080009470                wakeup_parent
+                0x0000000080009590                add_wait
+                0x00000000800095d8                add_exited
+                0x0000000080009620                add_task
+                0x0000000080009668                add_sched
+                0x00000000800096b0                add_sched_back
+                0x000000008000973c                remove_task
+                0x0000000080009794                remove_exited
+                0x00000000800097ec                remove_sched
+                0x0000000080009844                find_in_tasks
+                0x00000000800098c8                find_in_sched
+                0x00000000800099f4                task_files_delete
+                0x0000000080009c78                init_pc_list
+                0x0000000080009d54                init_pc
+                0x0000000080009e78                exec_from_kernel
+                0x0000000080009f68                runprog
+                0x000000008000a090                task_create
+                0x000000008000a330                pc_kill
+                0x000000008000a4b8                clear_exited
+                0x000000008000a564                pc_exit
+                0x000000008000a6c0                pc_schedule
+                0x000000008000a794                find_next_task
+                0x000000008000a910                find_in_sched_back
+                0x000000008000a9e0                print_sched
+                0x000000008000ab08                print_task
+                0x000000008000ab8c                print_exited
+                0x000000008000ac10                print_struct_task
+                0x000000008000ac90                print_wait
+                0x000000008000ad10                vmprog22
+                0x000000008000adb8                vmprog
+                0x000000008000aeb4                runuserprog
+ .text          0x000000008000aedc      0x320 kernel/pc/pid.o
+                0x000000008000aedc                init_pid
+                0x000000008000af50                pid_check
+                0x000000008000afe4                pid_alloc
+                0x000000008000b12c                pid_free
+ .text          0x000000008000b1fc      0x148 kernel/lock/lock.o
+                0x000000008000b238                init_lock
+                0x000000008000b280                lockup
+                0x000000008000b2dc                unlock
+ .text          0x000000008000b344      0xb84 kernel/vfs/ext2/ext2_super_operations.o
+                0x000000008000b434                ext2_delete_inode
+                0x000000008000bd04                ext2_write_inode
+ .text          0x000000008000bec8      0x8e0 kernel/vfs/ext2/ext2_inode_operations.o
+                0x000000008000bfe0                ext2_inode_lookup
+                0x000000008000c45c                ext2_create
+                0x000000008000c490                ext2_fill_inode
+                0x000000008000c5d0                ext2_inode_find_from_ram_to_disk
+ .text          0x000000008000c7a8      0x244 kernel/vfs/ext2/ext2_utils.o
+                0x000000008000c7a8                ext2_check_inode_bitmap
+                0x000000008000c8c8                ext2_group_base_sect
+ .text          0x000000008000c9ec        0x0 kernel/vfs/ext2/ext2_dentry_operations.o
+ .text          0x000000008000c9ec      0x7ac kernel/vfs/ext2/ext2_init.o
+                0x000000008000cadc                init_ext2
+ .text          0x000000008000d198      0x580 kernel/vfs/ext2/ext2_file_operations.o
+                0x000000008000d288                ext2_readdir
+ .text          0x000000008000d718      0x54c kernel/vfs/ext2/ext2_address_space_operations.o
+                0x000000008000d718                ext2_readpage
+                0x000000008000d834                ext2_writepage
+                0x000000008000d8f0                ext2_bmap
+ .text          0x000000008000dc64      0xe2c kernel/vfs/vfscache.o
+                0x000000008000de08                init_cache
+                0x000000008000df90                cache_init
+                0x000000008000e070                cache_is_full
+                0x000000008000e0b0                dcache_look_up
+                0x000000008000e24c                dcache_add
+                0x000000008000e328                dcache_put_LRU
+                0x000000008000e4f4                pcache_look_up
+                0x000000008000e66c                pcache_add
+                0x000000008000e748                pcache_put_LRU
+                0x000000008000e818                pcache_write_back
+                0x000000008000e86c                dget
+                0x000000008000e8a8                dput
+                0x000000008000e8e4                release_dentry
+                0x000000008000e920                release_inode
+                0x000000008000e95c                release_page
+                0x000000008000e9ac                __intHash
+                0x000000008000e9ec                __stringHash
+ .text          0x000000008000ea90      0x2bc kernel/vfs/mount.o
+                0x000000008000ea90                mount_ext2
+                0x000000008000ebcc                follow_mount
+                0x000000008000eca8                lookup_mnt
+ .text          0x000000008000ed4c      0x30c kernel/vfs/vfs_init.o
+                0x000000008000ed4c                init_vfs
+                0x000000008000ef1c                vfs_read_MBR
+ .text          0x000000008000f058      0x930 kernel/vfs/vfs_primitives/open.o
+                0x000000008000f170                vfs_open
+                0x000000008000f200                open_namei
+                0x000000008000f254                path_lookup
+                0x000000008000f304                link_path_walk
+                0x000000008000f464                real_lookup
+                0x000000008000f52c                dentry_open
+                0x000000008000f638                vfs_close
+                0x000000008000f69c                d_alloc
+ .text          0x000000008000f988      0xbb0 kernel/vfs/vfs_primitives/read_write.o
+                0x000000008000fa78                vfs_read
+                0x000000008000fb2c                vfs_write
+                0x000000008000fbe0                generic_file_read
+                0x000000008001001c                generic_file_write
+                0x0000000080010478                generic_file_flush
+ .text          0x0000000080010538      0x5d8 kernel/vfs/usr.o
+                0x00000000800105b0                vfs_cat
+                0x0000000080010710                vfs_cd
+                0x00000000800107b4                vfs_ls
+                0x0000000080010a3c                vfs_rm
+ .text          0x0000000080010b10      0x448 kernel/vfs/utils.o
+                0x0000000080010b10                read_block
+                0x0000000080010b58                write_block
+                0x0000000080010ba0                get_u16
+                0x0000000080010bf0                get_u32
+                0x0000000080010c5c                set_u16
+                0x0000000080010cb8                set_u32
+                0x0000000080010d3c                generic_compare_filename
+                0x0000000080010e00                get_bit
+                0x0000000080010e6c                set_bit
+                0x0000000080010edc                reset_bit
+ .text          0x0000000080010f58      0x7a0 kernel/vfs/fat32/fat32_inode_operations.o
+                0x0000000080011048                fat32_inode_lookup
+                0x00000000800116c4                fat32_create
+ .text          0x00000000800116f8        0x0 kernel/vfs/fat32/fat32_dentry_operations.o
+ .text          0x00000000800116f8      0x828 kernel/vfs/fat32/fat32_utils.o
+                0x00000000800116f8                fat32_convert_filename
+                0x0000000080011e60                read_fat
+ .text          0x0000000080011f20      0x9c0 kernel/vfs/fat32/fat32_init.o
+                0x0000000080012010                init_fat32
+ .text          0x00000000800128e0      0x5d0 kernel/vfs/fat32/fat32_file_operations.o
+                0x00000000800129d0                fat32_readdir
+ .text          0x0000000080012eb0      0x1e8 kernel/vfs/fat32/fat32_address_space_operations.o
+                0x0000000080012eb0                fat32_readpage
+                0x0000000080012fb0                fat32_writepage
+                0x0000000080013058                fat32_bmap
+ .text          0x0000000080013098      0x824 kernel/vfs/fat32/fat32_super_operations.o
+                0x0000000080013188                fat32_delete_inode
+                0x00000000800134cc                fat32_write_inode
+ .text          0x00000000800138bc      0xbf4 kernel/mm/myslab.o
+                0x0000000080013ae0                init_kmem_cpu
+                0x0000000080013b0c                init_kmem_node
+                0x0000000080013b5c                init_each_slab
+                0x0000000080013be0                init_slab
+                0x0000000080013c78                format_slabpage
+                0x0000000080013d2c                slab_alloc
+                0x0000000080013fb4                slab_free
+                0x0000000080014170                get_slab
+                0x0000000080014280                kmalloc
+                0x00000000800142f8                phy_kmalloc
+                0x00000000800143f0                kfree
+ .text          0x00000000800144b0      0xbfc kernel/mm/mybuddy.o
+                0x0000000080014668                buddy_info
+                0x0000000080014744                init_pages
+                0x0000000080014864                init_buddy
+                0x0000000080014b18                __free_pages
+                0x0000000080014da4                __alloc_pages
+                0x0000000080014f8c                alloc_pages
+                0x0000000080015050                free_pages
+ .text          0x00000000800150ac      0xf98 kernel/mm/mybootmm.o
+                0x00000000800150ac                set_mminfo
+                0x0000000080015100                insert_mminfo
+                0x0000000080015408                split_mminfo
+                0x00000000800155e0                remove_mminfo
+                0x00000000800156dc                init_bootmm
+                0x000000008001582c                set_maps
+                0x00000000800158a4                find_pages
+                0x0000000080015a8c                bootmm_alloc_pages
+                0x0000000080015bd8                bootmap_info
+                0x0000000080015cec                bootmm_free_pages
+ .text          0x0000000080016044      0x330 kernel/init.o
+                0x0000000080016044                machine_info
+                0x00000000800160e8                create_startup_process
+                0x0000000080016174                init_kernel
+ .text          0x0000000080016374       0x5c utils/assert.o
+                0x0000000080016374                assert
+ .text          0x00000000800163d0      0x268 utils/log.o
+                0x00000000800163d0                log_level_adv
+                0x000000008001640c                log_level_rec
+                0x0000000080016444                log
+                0x00000000800165c4                step
+                0x0000000080016614                step_reset
+ .text          0x0000000080016638      0x38c utils/utils.o
+                0x0000000080016638                kernel_memcpy
+                0x00000000800166bc                kernel_memset
+                0x00000000800166f0                kernel_memset_word
+                0x0000000080016750                kernel_strcmp
+                0x00000000800167d8                kernel_strcpy
+                0x0000000080016834                pow
+                0x00000000800168b0                kernel_cache
+                0x00000000800168f4                kernel_serial_puts
+                0x000000008001694c                kernel_serial_putc
+                0x0000000080016984                is_bound
+ .text          0x00000000800169c4      0x1d0 usr/exec.o
+                0x00000000800169c4                exec
+ .text          0x0000000080016b94     0x1370 usr/myvi.o
+                0x0000000080016c0c                myvi_init
+                0x0000000080016c88                to_lower_case
+                0x0000000080016ce8                mystrcpy
+                0x0000000080016d44                load_file
+                0x0000000080016f5c                save_file
+                0x0000000080017048                insert_key
+                0x0000000080017118                delete_key
+                0x00000000800171ac                put_char_on_screen
+                0x0000000080017218                screen_flush
+                0x0000000080017620                get_key
+                0x0000000080017654                page_location_last_line
+                0x00000000800176f0                page_location_next_line
+                0x0000000080017784                cursor_prev_line
+                0x0000000080017858                cursor_next_line
+                0x00000000800178f0                do_command_mode
+                0x0000000080017b0c                do_insert_mode
+                0x0000000080017c20                do_last_line_mode
+                0x0000000080017dec                myvi
+ .text          0x0000000080017f04      0x370 usr/ls.o
+                0x0000000080017f04                cut_front_blank
+                0x0000000080017fd0                strlen
+                0x0000000080018028                each_param
+                0x00000000800180e8                ls
+ .text          0x0000000080018274      0xebc usr/ps.o
+                0x0000000080018274                test_proc
+                0x00000000800182e8                testMem
+                0x00000000800183fc                testMem2
+                0x0000000080018420                test_sync
+                0x00000000800184cc                sync_demo_create
+                0x00000000800184f0                ps
+                0x000000008001873c                parse_cmd
  *(.text.*)
  *(.stub)
  *(.gnu.warning)
  *(.gnu.linkonce.t*)
  *(.mips16.fn.*)
  *(.mips16.call.*)
-                0x000000008001953c                _ecode = .
+                0x0000000080019130                _ecode = .
 
 .init
  *(.init)
@@ -723,44 +743,47 @@ Linker script and memory map
 .fini
  *(.fini)
 
-.rodata         0x000000008001953c     0x1159
+.rodata         0x0000000080019130     0x1001
  *(.rodata)
- .rodata        0x000000008001953c      0x20c arch/mips32/exc.o
- .rodata        0x0000000080019748       0x38 kernel/time/time.o
- .rodata        0x0000000080019780       0x14 kernel/syscall/syscall4.o
- .rodata        0x0000000080019794       0x14 kernel/driver/vga.o
- .rodata        0x00000000800197a8       0x1c kernel/vm/vm.o
- .rodata        0x00000000800197c4       0xa7 kernel/fs/fat/fat.o
- *fill*         0x000000008001986b        0x1 
- .rodata        0x000000008001986c       0x18 kernel/fs/fat/usr.o
- .rodata        0x0000000080019884      0x534 kernel/pc/pc.o
- .rodata        0x0000000080019db8        0xa kernel/vfs/ext2/ext2_init.o
- *fill*         0x0000000080019dc2        0x2 
- .rodata        0x0000000080019dc4        0x5 kernel/vfs/mount.o
- *fill*         0x0000000080019dc9        0x3 
- .rodata        0x0000000080019dcc       0x5e kernel/vfs/vfs_init.o
- *fill*         0x0000000080019e2a        0x2 
- .rodata        0x0000000080019e2c       0x62 kernel/vfs/usr.o
- *fill*         0x0000000080019e8e        0x2 
- .rodata        0x0000000080019e90        0xa kernel/vfs/fat32/fat32_init.o
- *fill*         0x0000000080019e9a        0x2 
- .rodata        0x0000000080019e9c       0x68 kernel/mm/myslab.o
- .rodata        0x0000000080019f04       0xa4 kernel/mm/mybuddy.o
- .rodata        0x0000000080019fa8       0xd4 kernel/mm/mybootmm.o
- .rodata        0x000000008001a07c      0x13b kernel/init.o
- *fill*         0x000000008001a1b7        0x1 
- .rodata        0x000000008001a1b8       0x14 utils/assert.o
- .rodata        0x000000008001a1cc       0x78 utils/log.o
- .rodata        0x000000008001a244       0x14 usr/exec.o
- .rodata        0x000000008001a258      0x158 usr/myvi.o
- .rodata        0x000000008001a3b0       0x38 usr/ls.o
- .rodata        0x000000008001a3e8      0x2ad usr/ps.o
+ .rodata        0x0000000080019130      0x20c arch/mips32/exc.o
+ .rodata        0x000000008001933c       0x38 kernel/time/time.o
+ .rodata        0x0000000080019374       0x14 kernel/syscall/syscall4.o
+ .rodata        0x0000000080019388       0x14 kernel/driver/vga.o
+ .rodata        0x000000008001939c       0x1c kernel/vm/vm.o
+ .rodata        0x00000000800193b8       0xa7 kernel/fs/fat/fat.o
+ *fill*         0x000000008001945f        0x1 
+ .rodata        0x0000000080019460       0x18 kernel/fs/fat/usr.o
+ .rodata        0x0000000080019478      0x3d9 kernel/pc/pc.o
+ *fill*         0x0000000080019851        0x3 
+ .rodata        0x0000000080019854        0xa kernel/vfs/ext2/ext2_init.o
+ *fill*         0x000000008001985e        0x2 
+ .rodata        0x0000000080019860        0x5 kernel/vfs/mount.o
+ *fill*         0x0000000080019865        0x3 
+ .rodata        0x0000000080019868       0x5e kernel/vfs/vfs_init.o
+ *fill*         0x00000000800198c6        0x2 
+ .rodata        0x00000000800198c8       0x62 kernel/vfs/usr.o
+ *fill*         0x000000008001992a        0x2 
+ .rodata        0x000000008001992c        0xa kernel/vfs/fat32/fat32_init.o
+ *fill*         0x0000000080019936        0x2 
+ .rodata        0x0000000080019938       0x68 kernel/mm/myslab.o
+ .rodata        0x00000000800199a0       0xa4 kernel/mm/mybuddy.o
+ .rodata        0x0000000080019a44       0xd4 kernel/mm/mybootmm.o
+ .rodata        0x0000000080019b18      0x13b kernel/init.o
+ *fill*         0x0000000080019c53        0x1 
+ .rodata        0x0000000080019c54       0x14 utils/assert.o
+ .rodata        0x0000000080019c68       0x78 utils/log.o
+ .rodata        0x0000000080019ce0       0x13 usr/exec.o
+ *fill*         0x0000000080019cf3        0x1 
+ .rodata        0x0000000080019cf4      0x158 usr/myvi.o
+ .rodata        0x0000000080019e4c       0x37 usr/ls.o
+ *fill*         0x0000000080019e83        0x1 
+ .rodata        0x0000000080019e84      0x2ad usr/ps.o
  *(.rodata.*)
  *(.gnu.linkonce.r*)
 
-.MIPS.abiflags  0x000000008001a698       0x18
+.MIPS.abiflags  0x000000008001a138       0x18
  .MIPS.abiflags
-                0x000000008001a698       0x18 arch/mips32/start.o
+                0x000000008001a138       0x18 arch/mips32/start.o
 
 .rodata1
  *(.rodata1)
@@ -810,128 +833,132 @@ Linker script and memory map
 
 .dynstr
  *(.dynstr)
-                0x000000008001a6b0                __etext = .
-                0x000000008001a6b0                _etext = .
+                0x000000008001a150                __etext = .
+                0x000000008001a150                _etext = .
                 [!provide]                        PROVIDE (etext, .)
-                0x000000008001a6b0                . = ALIGN (0x8)
+                0x000000008001a150                . = ALIGN (0x8)
 
-.data           0x000000008001a6b0      0x1d4
-                0x000000008001a6b0                _fdata = .
+.data           0x000000008001a150      0x1d4
+                0x000000008001a150                _fdata = .
  *(.data)
- .data          0x000000008001a6b0        0x0 arch/mips32/start.o
- .data          0x000000008001a6b0        0x0 arch/mips32/arch.o
- .data          0x000000008001a6b0        0x0 arch/mips32/page.o
- .data          0x000000008001a6b0        0x0 arch/mips32/intr.o
- .data          0x000000008001a6b0        0x0 arch/mips32/exc.o
- .data          0x000000008001a6b0        0x0 kernel/time/time.o
- .data          0x000000008001a6b0        0x0 kernel/syscall/syscall.o
- .data          0x000000008001a6b0        0x0 kernel/syscall/syscall4.o
- .data          0x000000008001a6b0      0x100 kernel/driver/ps2.o
-                0x000000008001a6b0                scantoascii_uppercase
-                0x000000008001a730                scantoascii_lowercase
- .data          0x000000008001a7b0        0x0 kernel/driver/vga.o
- .data          0x000000008001a7b0        0x0 kernel/driver/sd.o
- .data          0x000000008001a7b0        0x0 kernel/vm/vm.o
- .data          0x000000008001a7b0        0x0 kernel/vm/tlb.o
- .data          0x000000008001a7b0        0x0 kernel/fs/fat/dir.o
- .data          0x000000008001a7b0        0x0 kernel/fs/fat/debug.o
- .data          0x000000008001a7b0        0x0 kernel/fs/fat/fat.o
- .data          0x000000008001a7b0        0x0 kernel/fs/fat/usr.o
- .data          0x000000008001a7b0        0x0 kernel/fs/fat/utils.o
- .data          0x000000008001a7b0        0x0 kernel/fs/fscache/fscache.o
- .data          0x000000008001a7b0        0x0 kernel/pc/page.o
- .data          0x000000008001a7b0        0x0 kernel/pc/switch_ex.o
- .data          0x000000008001a7b0        0x0 kernel/pc/enter_user_pc.o
- .data          0x000000008001a7b0        0x0 kernel/pc/pc.o
- .data          0x000000008001a7b0        0x0 kernel/pc/pid.o
- .data          0x000000008001a7b0        0x0 kernel/lock/lock.o
- .data          0x000000008001a7b0        0x0 kernel/vfs/ext2/ext2_super_operations.o
- .data          0x000000008001a7b0       0x10 kernel/vfs/ext2/ext2_inode_operations.o
-                0x000000008001a7b0                ext2_inode_operations
- .data          0x000000008001a7c0        0x0 kernel/vfs/ext2/ext2_utils.o
- .data          0x000000008001a7c0        0x0 kernel/vfs/ext2/ext2_dentry_operations.o
- .data          0x000000008001a7c0        0x0 kernel/vfs/ext2/ext2_init.o
- .data          0x000000008001a7c0       0x10 kernel/vfs/ext2/ext2_file_operations.o
-                0x000000008001a7c0                ext2_file_operations
- .data          0x000000008001a7d0        0xc kernel/vfs/ext2/ext2_address_space_operations.o
-                0x000000008001a7d0                ext2_address_space_operations
- .data          0x000000008001a7dc       0x30 kernel/vfs/vfscache.o
-                0x000000008001a7dc                dentry_cache_operations
-                0x000000008001a7ec                inode_cache_operations
-                0x000000008001a7fc                page_cache_operations
- .data          0x000000008001a80c        0x0 kernel/vfs/mount.o
- .data          0x000000008001a80c        0x0 kernel/vfs/vfs_init.o
- .data          0x000000008001a80c        0x0 kernel/vfs/vfs_primitives/open.o
- .data          0x000000008001a80c        0x0 kernel/vfs/vfs_primitives/read_write.o
- .data          0x000000008001a80c        0x0 kernel/vfs/usr.o
- .data          0x000000008001a80c        0x0 kernel/vfs/utils.o
- .data          0x000000008001a80c       0x10 kernel/vfs/fat32/fat32_inode_operations.o
-                0x000000008001a80c                fat32_inode_operations
- .data          0x000000008001a81c        0x0 kernel/vfs/fat32/fat32_dentry_operations.o
- .data          0x000000008001a81c        0x0 kernel/vfs/fat32/fat32_utils.o
- .data          0x000000008001a81c        0x0 kernel/vfs/fat32/fat32_init.o
- .data          0x000000008001a81c       0x10 kernel/vfs/fat32/fat32_file_operations.o
-                0x000000008001a81c                fat32_file_operations
- .data          0x000000008001a82c        0xc kernel/vfs/fat32/fat32_address_space_operations.o
-                0x000000008001a82c                fat32_address_space_operations
- .data          0x000000008001a838        0x0 kernel/vfs/fat32/fat32_super_operations.o
- .data          0x000000008001a838       0x30 kernel/mm/myslab.o
- .data          0x000000008001a868        0x0 kernel/mm/mybuddy.o
- .data          0x000000008001a868       0x1c kernel/mm/mybootmm.o
-                0x000000008001a868                mem_msg
- .data          0x000000008001a884        0x0 kernel/init.o
- .data          0x000000008001a884        0x0 utils/assert.o
- .data          0x000000008001a884        0x0 utils/log.o
- .data          0x000000008001a884        0x0 utils/utils.o
- .data          0x000000008001a884        0x0 usr/exec.o
- .data          0x000000008001a884        0x0 usr/myvi.o
- .data          0x000000008001a884        0x0 usr/ls.o
- .data          0x000000008001a884        0x0 usr/ps.o
+ .data          0x000000008001a150        0x0 arch/mips32/start.o
+ .data          0x000000008001a150        0x0 arch/mips32/arch.o
+ .data          0x000000008001a150        0x0 arch/mips32/page.o
+ .data          0x000000008001a150        0x0 arch/mips32/intr.o
+ .data          0x000000008001a150        0x0 arch/mips32/exc.o
+ .data          0x000000008001a150        0x0 kernel/time/time.o
+ .data          0x000000008001a150        0x0 kernel/syscall/syscall.o
+ .data          0x000000008001a150        0x0 kernel/syscall/syscall4.o
+ .data          0x000000008001a150      0x100 kernel/driver/ps2.o
+                0x000000008001a150                scantoascii_uppercase
+                0x000000008001a1d0                scantoascii_lowercase
+ .data          0x000000008001a250        0x0 kernel/driver/vga.o
+ .data          0x000000008001a250        0x0 kernel/driver/sd.o
+ .data          0x000000008001a250        0x0 kernel/vm/vm.o
+ .data          0x000000008001a250        0x0 kernel/vm/tlb.o
+ .data          0x000000008001a250        0x0 kernel/fs/ext2/ext2.o
+ .data          0x000000008001a250        0x0 kernel/fs/ext2/usr.o
+ .data          0x000000008001a250        0x0 kernel/fs/debug.o
+ .data          0x000000008001a250        0x0 kernel/fs/ext2_utils.o
+ .data          0x000000008001a250        0x0 kernel/fs/fat/dir.o
+ .data          0x000000008001a250        0x0 kernel/fs/fat/fat.o
+ .data          0x000000008001a250        0x0 kernel/fs/fat/usr.o
+ .data          0x000000008001a250        0x0 kernel/fs/fat_utils.o
+ .data          0x000000008001a250        0x0 kernel/fs/utils.o
+ .data          0x000000008001a250        0x0 kernel/fs/fscache/fscache.o
+ .data          0x000000008001a250        0x0 kernel/pc/page.o
+ .data          0x000000008001a250        0x0 kernel/pc/switch_ex.o
+ .data          0x000000008001a250        0x0 kernel/pc/enter_user_pc.o
+ .data          0x000000008001a250        0x0 kernel/pc/pc.o
+ .data          0x000000008001a250        0x0 kernel/pc/pid.o
+ .data          0x000000008001a250        0x0 kernel/lock/lock.o
+ .data          0x000000008001a250        0x0 kernel/vfs/ext2/ext2_super_operations.o
+ .data          0x000000008001a250       0x10 kernel/vfs/ext2/ext2_inode_operations.o
+                0x000000008001a250                ext2_inode_operations
+ .data          0x000000008001a260        0x0 kernel/vfs/ext2/ext2_utils.o
+ .data          0x000000008001a260        0x0 kernel/vfs/ext2/ext2_dentry_operations.o
+ .data          0x000000008001a260        0x0 kernel/vfs/ext2/ext2_init.o
+ .data          0x000000008001a260       0x10 kernel/vfs/ext2/ext2_file_operations.o
+                0x000000008001a260                ext2_file_operations
+ .data          0x000000008001a270        0xc kernel/vfs/ext2/ext2_address_space_operations.o
+                0x000000008001a270                ext2_address_space_operations
+ .data          0x000000008001a27c       0x30 kernel/vfs/vfscache.o
+                0x000000008001a27c                dentry_cache_operations
+                0x000000008001a28c                inode_cache_operations
+                0x000000008001a29c                page_cache_operations
+ .data          0x000000008001a2ac        0x0 kernel/vfs/mount.o
+ .data          0x000000008001a2ac        0x0 kernel/vfs/vfs_init.o
+ .data          0x000000008001a2ac        0x0 kernel/vfs/vfs_primitives/open.o
+ .data          0x000000008001a2ac        0x0 kernel/vfs/vfs_primitives/read_write.o
+ .data          0x000000008001a2ac        0x0 kernel/vfs/usr.o
+ .data          0x000000008001a2ac        0x0 kernel/vfs/utils.o
+ .data          0x000000008001a2ac       0x10 kernel/vfs/fat32/fat32_inode_operations.o
+                0x000000008001a2ac                fat32_inode_operations
+ .data          0x000000008001a2bc        0x0 kernel/vfs/fat32/fat32_dentry_operations.o
+ .data          0x000000008001a2bc        0x0 kernel/vfs/fat32/fat32_utils.o
+ .data          0x000000008001a2bc        0x0 kernel/vfs/fat32/fat32_init.o
+ .data          0x000000008001a2bc       0x10 kernel/vfs/fat32/fat32_file_operations.o
+                0x000000008001a2bc                fat32_file_operations
+ .data          0x000000008001a2cc        0xc kernel/vfs/fat32/fat32_address_space_operations.o
+                0x000000008001a2cc                fat32_address_space_operations
+ .data          0x000000008001a2d8        0x0 kernel/vfs/fat32/fat32_super_operations.o
+ .data          0x000000008001a2d8       0x30 kernel/mm/myslab.o
+ .data          0x000000008001a308        0x0 kernel/mm/mybuddy.o
+ .data          0x000000008001a308       0x1c kernel/mm/mybootmm.o
+                0x000000008001a308                mem_msg
+ .data          0x000000008001a324        0x0 kernel/init.o
+ .data          0x000000008001a324        0x0 utils/assert.o
+ .data          0x000000008001a324        0x0 utils/log.o
+ .data          0x000000008001a324        0x0 utils/utils.o
+ .data          0x000000008001a324        0x0 usr/exec.o
+ .data          0x000000008001a324        0x0 usr/myvi.o
+ .data          0x000000008001a324        0x0 usr/ls.o
+ .data          0x000000008001a324        0x0 usr/ps.o
  *(.data.*)
  *(.gnu.linkonce.d*)
 
 .data1
  *(.data1)
-                0x0000000080022880                _gp = (ALIGN (0x10) + 0x7ff0)
+                0x0000000080022320                _gp = (ALIGN (0x10) + 0x7ff0)
 
 .got
  *(.got.plt)
  *(.got)
 
-.sdata          0x000000008001a884       0x74
+.sdata          0x000000008001a324       0x74
  *(.sdata)
- .sdata         0x000000008001a884       0x34 arch/mips32/arch.o
-                0x000000008001a884                CHAR_VRAM
-                0x000000008001a888                GRAPHIC_VRAM
-                0x000000008001a88c                GPIO_SWITCH
-                0x000000008001a890                GPIO_BUTTON
-                0x000000008001a894                GPIO_SEG
-                0x000000008001a898                GPIO_LED
-                0x000000008001a89c                GPIO_PS2_DATA
-                0x000000008001a8a0                GPIO_PS2_CTRL
-                0x000000008001a8a4                GPIO_UART_DATA
-                0x000000008001a8a8                GPIO_UART_CTRL
-                0x000000008001a8ac                GPIO_CURSOR
-                0x000000008001a8b0                VGA_MODE
-                0x000000008001a8b4                kernel_sp
- .sdata         0x000000008001a8b8        0x4 kernel/driver/ps2.o
- .sdata         0x000000008001a8bc       0x18 kernel/driver/vga.o
-                0x000000008001a8bc                VGA_CHAR_MAX_ROW
-                0x000000008001a8c0                VGA_CHAR_MAX_COL
-                0x000000008001a8c4                VGA_CHAR_ROW
-                0x000000008001a8c8                VGA_CHAR_COL
-                0x000000008001a8cc                cursor_freq
- .sdata         0x000000008001a8d4        0x8 kernel/driver/sd.o
- .sdata         0x000000008001a8dc        0x8 kernel/vfs/ext2/ext2_super_operations.o
-                0x000000008001a8dc                ext2_super_operations
- .sdata         0x000000008001a8e4        0x4 kernel/vfs/ext2/ext2_dentry_operations.o
-                0x000000008001a8e4                ext2_dentry_operations
- .sdata         0x000000008001a8e8        0x4 kernel/vfs/fat32/fat32_dentry_operations.o
-                0x000000008001a8e8                fat32_dentry_operations
- .sdata         0x000000008001a8ec        0x8 kernel/vfs/fat32/fat32_super_operations.o
-                0x000000008001a8ec                fat32_super_operations
- .sdata         0x000000008001a8f4        0x4 usr/exec.o
-                0x000000008001a8f4                CACHE_BLOCK_SIZE
+ .sdata         0x000000008001a324       0x34 arch/mips32/arch.o
+                0x000000008001a324                CHAR_VRAM
+                0x000000008001a328                GRAPHIC_VRAM
+                0x000000008001a32c                GPIO_SWITCH
+                0x000000008001a330                GPIO_BUTTON
+                0x000000008001a334                GPIO_SEG
+                0x000000008001a338                GPIO_LED
+                0x000000008001a33c                GPIO_PS2_DATA
+                0x000000008001a340                GPIO_PS2_CTRL
+                0x000000008001a344                GPIO_UART_DATA
+                0x000000008001a348                GPIO_UART_CTRL
+                0x000000008001a34c                GPIO_CURSOR
+                0x000000008001a350                VGA_MODE
+                0x000000008001a354                kernel_sp
+ .sdata         0x000000008001a358        0x4 kernel/driver/ps2.o
+ .sdata         0x000000008001a35c       0x18 kernel/driver/vga.o
+                0x000000008001a35c                VGA_CHAR_MAX_ROW
+                0x000000008001a360                VGA_CHAR_MAX_COL
+                0x000000008001a364                VGA_CHAR_ROW
+                0x000000008001a368                VGA_CHAR_COL
+                0x000000008001a36c                cursor_freq
+ .sdata         0x000000008001a374        0x8 kernel/driver/sd.o
+ .sdata         0x000000008001a37c        0x8 kernel/vfs/ext2/ext2_super_operations.o
+                0x000000008001a37c                ext2_super_operations
+ .sdata         0x000000008001a384        0x4 kernel/vfs/ext2/ext2_dentry_operations.o
+                0x000000008001a384                ext2_dentry_operations
+ .sdata         0x000000008001a388        0x4 kernel/vfs/fat32/fat32_dentry_operations.o
+                0x000000008001a388                fat32_dentry_operations
+ .sdata         0x000000008001a38c        0x8 kernel/vfs/fat32/fat32_super_operations.o
+                0x000000008001a38c                fat32_super_operations
+ .sdata         0x000000008001a394        0x4 usr/exec.o
+                0x000000008001a394                CACHE_BLOCK_SIZE
  *(.sdata1)
  *(.sdata.*)
  *(.gnu.linkonce.s.*)
@@ -941,197 +968,202 @@ Linker script and memory map
 
 .lit4
  *(.lit4)
-                0x000000008001a8f8                . = ALIGN (0x8)
-                0x000000008001a8f8                _edata = .
+                0x000000008001a398                . = ALIGN (0x8)
+                0x000000008001a398                _edata = .
                 [!provide]                        PROVIDE (edata, .)
-                0x000000008001a8f8                __bss_start = .
+                0x000000008001a398                __bss_start = .
                 [!provide]                        PROVIDE (__edata, .)
-                0x000000008001a8f8                _fbss = .
+                0x000000008001a398                _fbss = .
 
-.sbss           0x000000008001a8f8       0xcc
-                0x000000008001a8f8                __sbss_start = .
-                0x000000008001a8f8                ___sbss_start = .
+.sbss           0x000000008001a398       0xcc
+                0x000000008001a398                __sbss_start = .
+                0x000000008001a398                ___sbss_start = .
  *(.dynsbss)
  *(.sbss)
- .sbss          0x000000008001a8f8        0x8 arch/mips32/exc.o
-                0x000000008001a8f8                count
-                0x000000008001a8fc                count_2
- .sbss          0x000000008001a900       0x14 kernel/driver/ps2.o
- .sbss          0x000000008001a914        0x8 kernel/fs/fat/fat.o
-                0x000000008001a914                fat_clock_head
-                0x000000008001a918                dir_data_clock_head
- .sbss          0x000000008001a91c        0x4 kernel/pc/pc.o
-                0x000000008001a91c                current_task
- .sbss          0x000000008001a920        0x8 kernel/vfs/fat32/fat32_inode_operations.o
- .sbss          0x000000008001a928        0x8 kernel/vfs/fat32/fat32_init.o
- .sbss          0x000000008001a930        0x8 utils/log.o
-                0x000000008001a930                gstep
- .sbss          0x000000008001a938        0xc usr/myvi.o
-                0x000000008001a938                inst_len
-                0x000000008001a93c                size
-                0x000000008001a940                page_location
+ .sbss          0x000000008001a398        0x8 arch/mips32/exc.o
+                0x000000008001a398                count
+                0x000000008001a39c                count_2
+ .sbss          0x000000008001a3a0       0x14 kernel/driver/ps2.o
+ .sbss          0x000000008001a3b4        0x8 kernel/fs/fat/fat.o
+                0x000000008001a3b4                fat_clock_head
+                0x000000008001a3b8                dir_data_clock_head
+ .sbss          0x000000008001a3bc        0x4 kernel/pc/pc.o
+                0x000000008001a3bc                current_task
+ .sbss          0x000000008001a3c0        0x8 kernel/vfs/fat32/fat32_inode_operations.o
+ .sbss          0x000000008001a3c8        0x8 kernel/vfs/fat32/fat32_init.o
+ .sbss          0x000000008001a3d0        0x8 utils/log.o
+                0x000000008001a3d0                gstep
+ .sbss          0x000000008001a3d8        0xc usr/myvi.o
+                0x000000008001a3d8                inst_len
+                0x000000008001a3dc                size
+                0x000000008001a3e0                page_location
  *(.sbss.*)
  *(.scommon)
- .scommon       0x000000008001a944        0x4 arch/mips32/intr.o
-                0x000000008001a944                next_pid
- .scommon       0x000000008001a948        0x0 arch/mips32/exc.o
- .scommon       0x000000008001a948        0x0 kernel/time/time.o
- .scommon       0x000000008001a948        0x0 kernel/syscall/syscall.o
- .scommon       0x000000008001a948        0x0 kernel/syscall/syscall4.o
- .scommon       0x000000008001a948        0x0 kernel/driver/ps2.o
- .scommon       0x000000008001a948        0x8 kernel/driver/vga.o
-                0x000000008001a948                cursor_col
-                0x000000008001a94c                cursor_row
- .scommon       0x000000008001a950        0x0 kernel/driver/sd.o
- .scommon       0x000000008001a950        0x0 kernel/vm/vm.o
- .scommon       0x000000008001a950        0x0 kernel/fs/fat/fat.o
- .scommon       0x000000008001a950       0x20 kernel/pc/pc.o
-                0x000000008001a950                sched
-                0x000000008001a958                tasks
-                0x000000008001a960                wait
-                0x000000008001a968                exited
- .scommon       0x000000008001a970        0x0 kernel/pc/pid.o
- .scommon       0x000000008001a970        0x0 kernel/lock/lock.o
- .scommon       0x000000008001a970        0x0 kernel/vfs/ext2/ext2_super_operations.o
- .scommon       0x000000008001a970        0x0 kernel/vfs/ext2/ext2_inode_operations.o
- .scommon       0x000000008001a970        0x0 kernel/vfs/ext2/ext2_utils.o
- .scommon       0x000000008001a970        0x0 kernel/vfs/ext2/ext2_dentry_operations.o
- .scommon       0x000000008001a970        0x0 kernel/vfs/ext2/ext2_init.o
- .scommon       0x000000008001a970        0x0 kernel/vfs/ext2/ext2_file_operations.o
- .scommon       0x000000008001a970        0x0 kernel/vfs/ext2/ext2_address_space_operations.o
- .scommon       0x000000008001a970        0xc kernel/vfs/vfscache.o
-                0x000000008001a970                dcache
-                0x000000008001a974                pcache
-                0x000000008001a978                icache
- .scommon       0x000000008001a97c       0x14 kernel/vfs/vfs_init.o
-                0x000000008001a97c                pwd_dentry
-                0x000000008001a980                MBR
-                0x000000008001a984                root_dentry
-                0x000000008001a988                root_mnt
-                0x000000008001a98c                pwd_mnt
- .scommon       0x000000008001a990        0xc kernel/mm/mybuddy.o
-                0x000000008001a990                kernel_start_pfn
-                0x000000008001a994                kernel_end_pfn
-                0x000000008001a998                pages
- .scommon       0x000000008001a99c        0x8 kernel/mm/mybootmm.o
-                0x000000008001a99c                firstusercode_start
-                0x000000008001a9a0                firstusercode_len
- .scommon       0x000000008001a9a4        0x0 kernel/init.o
- .scommon       0x000000008001a9a4        0x0 usr/exec.o
- .scommon       0x000000008001a9a4       0x1c usr/myvi.o
-                0x000000008001a9a4                cursor_location
-                0x000000008001a9a8                is_new_file
-                0x000000008001a9ac                page_end
-                0x000000008001a9b0                filename
-                0x000000008001a9b4                mode
-                0x000000008001a9b8                err
-                0x000000008001a9bc                pre_cursor_freq
- .scommon       0x000000008001a9c0        0x4 usr/ps.o
-                0x000000008001a9c0                ps_buffer_index
-                0x000000008001a9c4                __sbss_end = .
-                0x000000008001a9c4                ___sbss_end = .
+ .scommon       0x000000008001a3e4        0x4 arch/mips32/intr.o
+                0x000000008001a3e4                next_pid
+ .scommon       0x000000008001a3e8        0x0 arch/mips32/exc.o
+ .scommon       0x000000008001a3e8        0x0 kernel/time/time.o
+ .scommon       0x000000008001a3e8        0x0 kernel/syscall/syscall.o
+ .scommon       0x000000008001a3e8        0x0 kernel/syscall/syscall4.o
+ .scommon       0x000000008001a3e8        0x0 kernel/driver/ps2.o
+ .scommon       0x000000008001a3e8        0x8 kernel/driver/vga.o
+                0x000000008001a3e8                cursor_col
+                0x000000008001a3ec                cursor_row
+ .scommon       0x000000008001a3f0        0x0 kernel/driver/sd.o
+ .scommon       0x000000008001a3f0        0x0 kernel/vm/vm.o
+ .scommon       0x000000008001a3f0        0x0 kernel/fs/ext2/ext2.o
+ .scommon       0x000000008001a3f0        0x0 kernel/fs/fat/fat.o
+ .scommon       0x000000008001a3f0       0x20 kernel/pc/pc.o
+                0x000000008001a3f0                sched
+                0x000000008001a3f8                tasks
+                0x000000008001a400                wait
+                0x000000008001a408                exited
+ .scommon       0x000000008001a410        0x0 kernel/pc/pid.o
+ .scommon       0x000000008001a410        0x0 kernel/lock/lock.o
+ .scommon       0x000000008001a410        0x0 kernel/vfs/ext2/ext2_super_operations.o
+ .scommon       0x000000008001a410        0x0 kernel/vfs/ext2/ext2_inode_operations.o
+ .scommon       0x000000008001a410        0x0 kernel/vfs/ext2/ext2_utils.o
+ .scommon       0x000000008001a410        0x0 kernel/vfs/ext2/ext2_dentry_operations.o
+ .scommon       0x000000008001a410        0x0 kernel/vfs/ext2/ext2_init.o
+ .scommon       0x000000008001a410        0x0 kernel/vfs/ext2/ext2_file_operations.o
+ .scommon       0x000000008001a410        0x0 kernel/vfs/ext2/ext2_address_space_operations.o
+ .scommon       0x000000008001a410        0xc kernel/vfs/vfscache.o
+                0x000000008001a410                dcache
+                0x000000008001a414                pcache
+                0x000000008001a418                icache
+ .scommon       0x000000008001a41c       0x14 kernel/vfs/vfs_init.o
+                0x000000008001a41c                pwd_dentry
+                0x000000008001a420                MBR
+                0x000000008001a424                root_dentry
+                0x000000008001a428                root_mnt
+                0x000000008001a42c                pwd_mnt
+ .scommon       0x000000008001a430        0xc kernel/mm/mybuddy.o
+                0x000000008001a430                kernel_start_pfn
+                0x000000008001a434                kernel_end_pfn
+                0x000000008001a438                pages
+ .scommon       0x000000008001a43c        0x8 kernel/mm/mybootmm.o
+                0x000000008001a43c                firstusercode_start
+                0x000000008001a440                firstusercode_len
+ .scommon       0x000000008001a444        0x0 kernel/init.o
+ .scommon       0x000000008001a444        0x0 usr/exec.o
+ .scommon       0x000000008001a444       0x1c usr/myvi.o
+                0x000000008001a444                cursor_location
+                0x000000008001a448                is_new_file
+                0x000000008001a44c                page_end
+                0x000000008001a450                filename
+                0x000000008001a454                mode
+                0x000000008001a458                err
+                0x000000008001a45c                pre_cursor_freq
+ .scommon       0x000000008001a460        0x4 usr/ps.o
+                0x000000008001a460                ps_buffer_index
+                0x000000008001a464                __sbss_end = .
+                0x000000008001a464                ___sbss_end = .
 
-.bss            0x000000008001a9c4    0x17d58
+.bss            0x000000008001a464    0x17d58
  *(.dynbss)
  *(.bss)
- .bss           0x000000008001a9c4        0x0 arch/mips32/start.o
- .bss           0x000000008001a9c4        0x0 arch/mips32/arch.o
- .bss           0x000000008001a9c4        0x0 arch/mips32/page.o
- .bss           0x000000008001a9c4        0x0 arch/mips32/intr.o
- .bss           0x000000008001a9c4        0x0 arch/mips32/exc.o
- .bss           0x000000008001a9c4        0x0 kernel/time/time.o
- .bss           0x000000008001a9c4        0x0 kernel/syscall/syscall.o
- .bss           0x000000008001a9c4        0x0 kernel/syscall/syscall4.o
- .bss           0x000000008001a9c4      0x100 kernel/driver/ps2.o
- .bss           0x000000008001aac4        0x0 kernel/driver/vga.o
- .bss           0x000000008001aac4        0x0 kernel/driver/sd.o
- .bss           0x000000008001aac4        0x0 kernel/vm/vm.o
- .bss           0x000000008001aac4        0x0 kernel/vm/tlb.o
- .bss           0x000000008001aac4        0x0 kernel/fs/fat/dir.o
- .bss           0x000000008001aac4        0x0 kernel/fs/fat/debug.o
- .bss           0x000000008001aac4        0x0 kernel/fs/fat/fat.o
- .bss           0x000000008001aac4        0x0 kernel/fs/fat/usr.o
- .bss           0x000000008001aac4        0x0 kernel/fs/fat/utils.o
- .bss           0x000000008001aac4        0x0 kernel/fs/fscache/fscache.o
- .bss           0x000000008001aac4        0x0 kernel/pc/page.o
- .bss           0x000000008001aac4        0x0 kernel/pc/switch_ex.o
- .bss           0x000000008001aac4        0x0 kernel/pc/enter_user_pc.o
- .bss           0x000000008001aac4        0x0 kernel/pc/pc.o
- .bss           0x000000008001aac4        0x0 kernel/pc/pid.o
- .bss           0x000000008001aac4        0x0 kernel/lock/lock.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/ext2/ext2_super_operations.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/ext2/ext2_inode_operations.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/ext2/ext2_utils.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/ext2/ext2_dentry_operations.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/ext2/ext2_init.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/ext2/ext2_file_operations.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/ext2/ext2_address_space_operations.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/vfscache.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/mount.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/vfs_init.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/vfs_primitives/open.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/vfs_primitives/read_write.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/usr.o
- .bss           0x000000008001aac4        0x0 kernel/vfs/utils.o
- .bss           0x000000008001aac4       0x18 kernel/vfs/fat32/fat32_inode_operations.o
- .bss           0x000000008001aadc        0x0 kernel/vfs/fat32/fat32_dentry_operations.o
- .bss           0x000000008001aadc        0x0 kernel/vfs/fat32/fat32_utils.o
- .bss           0x000000008001aadc       0x18 kernel/vfs/fat32/fat32_init.o
- .bss           0x000000008001aaf4        0x0 kernel/vfs/fat32/fat32_file_operations.o
- .bss           0x000000008001aaf4        0x0 kernel/vfs/fat32/fat32_address_space_operations.o
- .bss           0x000000008001aaf4        0x0 kernel/vfs/fat32/fat32_super_operations.o
- .bss           0x000000008001aaf4        0x0 kernel/mm/myslab.o
- .bss           0x000000008001aaf4        0x0 kernel/mm/mybuddy.o
- .bss           0x000000008001aaf4        0x0 kernel/mm/mybootmm.o
- .bss           0x000000008001aaf4        0x0 kernel/init.o
- .bss           0x000000008001aaf4        0x0 utils/assert.o
- .bss           0x000000008001aaf4        0x0 utils/log.o
- .bss           0x000000008001aaf4        0x0 utils/utils.o
- .bss           0x000000008001aaf4        0x0 usr/exec.o
- .bss           0x000000008001aaf4       0x50 usr/myvi.o
-                0x000000008001aaf4                instruction
- .bss           0x000000008001ab44        0x0 usr/ls.o
- .bss           0x000000008001ab44        0x0 usr/ps.o
+ .bss           0x000000008001a464        0x0 arch/mips32/start.o
+ .bss           0x000000008001a464        0x0 arch/mips32/arch.o
+ .bss           0x000000008001a464        0x0 arch/mips32/page.o
+ .bss           0x000000008001a464        0x0 arch/mips32/intr.o
+ .bss           0x000000008001a464        0x0 arch/mips32/exc.o
+ .bss           0x000000008001a464        0x0 kernel/time/time.o
+ .bss           0x000000008001a464        0x0 kernel/syscall/syscall.o
+ .bss           0x000000008001a464        0x0 kernel/syscall/syscall4.o
+ .bss           0x000000008001a464      0x100 kernel/driver/ps2.o
+ .bss           0x000000008001a564        0x0 kernel/driver/vga.o
+ .bss           0x000000008001a564        0x0 kernel/driver/sd.o
+ .bss           0x000000008001a564        0x0 kernel/vm/vm.o
+ .bss           0x000000008001a564        0x0 kernel/vm/tlb.o
+ .bss           0x000000008001a564        0x0 kernel/fs/ext2/ext2.o
+ .bss           0x000000008001a564        0x0 kernel/fs/ext2/usr.o
+ .bss           0x000000008001a564        0x0 kernel/fs/debug.o
+ .bss           0x000000008001a564        0x0 kernel/fs/ext2_utils.o
+ .bss           0x000000008001a564        0x0 kernel/fs/fat/dir.o
+ .bss           0x000000008001a564        0x0 kernel/fs/fat/fat.o
+ .bss           0x000000008001a564        0x0 kernel/fs/fat/usr.o
+ .bss           0x000000008001a564        0x0 kernel/fs/fat_utils.o
+ .bss           0x000000008001a564        0x0 kernel/fs/utils.o
+ .bss           0x000000008001a564        0x0 kernel/fs/fscache/fscache.o
+ .bss           0x000000008001a564        0x0 kernel/pc/page.o
+ .bss           0x000000008001a564        0x0 kernel/pc/switch_ex.o
+ .bss           0x000000008001a564        0x0 kernel/pc/enter_user_pc.o
+ .bss           0x000000008001a564        0x0 kernel/pc/pc.o
+ .bss           0x000000008001a564        0x0 kernel/pc/pid.o
+ .bss           0x000000008001a564        0x0 kernel/lock/lock.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/ext2/ext2_super_operations.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/ext2/ext2_inode_operations.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/ext2/ext2_utils.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/ext2/ext2_dentry_operations.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/ext2/ext2_init.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/ext2/ext2_file_operations.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/ext2/ext2_address_space_operations.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/vfscache.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/mount.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/vfs_init.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/vfs_primitives/open.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/vfs_primitives/read_write.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/usr.o
+ .bss           0x000000008001a564        0x0 kernel/vfs/utils.o
+ .bss           0x000000008001a564       0x18 kernel/vfs/fat32/fat32_inode_operations.o
+ .bss           0x000000008001a57c        0x0 kernel/vfs/fat32/fat32_dentry_operations.o
+ .bss           0x000000008001a57c        0x0 kernel/vfs/fat32/fat32_utils.o
+ .bss           0x000000008001a57c       0x18 kernel/vfs/fat32/fat32_init.o
+ .bss           0x000000008001a594        0x0 kernel/vfs/fat32/fat32_file_operations.o
+ .bss           0x000000008001a594        0x0 kernel/vfs/fat32/fat32_address_space_operations.o
+ .bss           0x000000008001a594        0x0 kernel/vfs/fat32/fat32_super_operations.o
+ .bss           0x000000008001a594        0x0 kernel/mm/myslab.o
+ .bss           0x000000008001a594        0x0 kernel/mm/mybuddy.o
+ .bss           0x000000008001a594        0x0 kernel/mm/mybootmm.o
+ .bss           0x000000008001a594        0x0 kernel/init.o
+ .bss           0x000000008001a594        0x0 utils/assert.o
+ .bss           0x000000008001a594        0x0 utils/log.o
+ .bss           0x000000008001a594        0x0 utils/utils.o
+ .bss           0x000000008001a594        0x0 usr/exec.o
+ .bss           0x000000008001a594       0x50 usr/myvi.o
+                0x000000008001a594                instruction
+ .bss           0x000000008001a5e4        0x0 usr/ls.o
+ .bss           0x000000008001a5e4        0x0 usr/ps.o
  *(.bss.*)
  *(COMMON)
- COMMON         0x000000008001ab44       0x40 arch/mips32/intr.o
-                0x000000008001ab44                interrupts
-                0x000000008001ab64                pidmap
- COMMON         0x000000008001ab84       0x80 arch/mips32/exc.o
-                0x000000008001ab84                exceptions
- COMMON         0x000000008001ac04      0x400 kernel/syscall/syscall.o
-                0x000000008001ac04                syscalls
- COMMON         0x000000008001b004     0x4150 kernel/fs/fat/dir.o
-                0x000000008001b004                dir_find
- COMMON         0x000000008001f154     0x2058 kernel/fs/fat/fat.o
-                0x000000008001f154                dir_data_buf
-                0x000000008001f974                fat_info
-                0x000000008001fd8c                filename11
-                0x000000008001fd9c                new_alloc_empty
-                0x0000000080020d9c                fat_buf
- COMMON         0x00000000800211ac     0x4170 kernel/fs/fat/usr.o
-                0x00000000800211ac                file_create
-                0x00000000800252fc                mk_dir_buf
- COMMON         0x000000008002531c       0x30 kernel/pc/pc.o
-                0x000000008002531c                sched_back
-                0x000000008002533c                sched_time_cnt
- COMMON         0x000000008002534c      0x150 kernel/mm/myslab.o
-                0x000000008002534c                kmalloc_caches
- COMMON         0x000000008002549c       0x54 kernel/mm/mybuddy.o
-                0x000000008002549c                buddy
- COMMON         0x00000000800254f0     0x8090 kernel/mm/mybootmm.o
-                0x00000000800254f0                bootmmmap
-                0x000000008002d4f0                bmm
- COMMON         0x000000008002d580     0x4150 usr/exec.o
-                0x000000008002d580                file
- COMMON         0x00000000800316d0     0x1000 usr/myvi.o
-                0x00000000800316d0                buffer
- COMMON         0x00000000800326d0       0x4c usr/ps.o
-                0x00000000800326d0                lk
-                0x00000000800326dc                ps_buffer
-                0x000000008003271c                . = ALIGN (0x4)
-                0x000000008003271c                . = ALIGN (0x4)
-                0x000000008003271c                _end = .
+ COMMON         0x000000008001a5e4       0x40 arch/mips32/intr.o
+                0x000000008001a5e4                interrupts
+                0x000000008001a604                pidmap
+ COMMON         0x000000008001a624       0x80 arch/mips32/exc.o
+                0x000000008001a624                exceptions
+ COMMON         0x000000008001a6a4      0x400 kernel/syscall/syscall.o
+                0x000000008001a6a4                syscalls
+ COMMON         0x000000008001aaa4     0x4150 kernel/fs/fat/dir.o
+                0x000000008001aaa4                dir_find
+ COMMON         0x000000008001ebf4     0x2058 kernel/fs/fat/fat.o
+                0x000000008001ebf4                dir_data_buf
+                0x000000008001f414                fat_info
+                0x000000008001f82c                filename11
+                0x000000008001f83c                new_alloc_empty
+                0x000000008002083c                fat_buf
+ COMMON         0x0000000080020c4c     0x4170 kernel/fs/fat/usr.o
+                0x0000000080020c4c                file_create
+                0x0000000080024d9c                mk_dir_buf
+ COMMON         0x0000000080024dbc       0x30 kernel/pc/pc.o
+                0x0000000080024dbc                sched_back
+                0x0000000080024ddc                sched_time_cnt
+ COMMON         0x0000000080024dec      0x150 kernel/mm/myslab.o
+                0x0000000080024dec                kmalloc_caches
+ COMMON         0x0000000080024f3c       0x54 kernel/mm/mybuddy.o
+                0x0000000080024f3c                buddy
+ COMMON         0x0000000080024f90     0x8090 kernel/mm/mybootmm.o
+                0x0000000080024f90                bootmmmap
+                0x000000008002cf90                bmm
+ COMMON         0x000000008002d020     0x4150 usr/exec.o
+                0x000000008002d020                file
+ COMMON         0x0000000080031170     0x1000 usr/myvi.o
+                0x0000000080031170                buffer
+ COMMON         0x0000000080032170       0x4c usr/ps.o
+                0x0000000080032170                lk
+                0x000000008003217c                ps_buffer
+                0x00000000800321bc                . = ALIGN (0x4)
+                0x00000000800321bc                . = ALIGN (0x4)
+                0x00000000800321bc                _end = .
                 [!provide]                        PROVIDE (__end, .)
                 [!provide]                        PROVIDE (end, .)
 
@@ -1168,11 +1200,15 @@ Linker script and memory map
  .comment       0x0000000000000088       0x45 kernel/driver/vga.o
  .comment       0x0000000000000088       0x45 kernel/driver/sd.o
  .comment       0x0000000000000088       0x45 kernel/vm/vm.o
+ .comment       0x0000000000000088       0x45 kernel/fs/ext2/ext2.o
+ .comment       0x0000000000000088       0x45 kernel/fs/ext2/usr.o
+ .comment       0x0000000000000088       0x45 kernel/fs/debug.o
+ .comment       0x0000000000000088       0x45 kernel/fs/ext2_utils.o
  .comment       0x0000000000000088       0x45 kernel/fs/fat/dir.o
- .comment       0x0000000000000088       0x45 kernel/fs/fat/debug.o
  .comment       0x0000000000000088       0x45 kernel/fs/fat/fat.o
  .comment       0x0000000000000088       0x45 kernel/fs/fat/usr.o
- .comment       0x0000000000000088       0x45 kernel/fs/fat/utils.o
+ .comment       0x0000000000000088       0x45 kernel/fs/fat_utils.o
+ .comment       0x0000000000000088       0x45 kernel/fs/utils.o
  .comment       0x0000000000000088       0x45 kernel/fs/fscache/fscache.o
  .comment       0x0000000000000088       0x45 kernel/pc/page.o
  .comment       0x0000000000000088       0x45 kernel/pc/pc.o
@@ -1240,93 +1276,101 @@ Linker script and memory map
  .gnu.attributes
                 0x00000000000000c0       0x10 kernel/vm/tlb.o
  .gnu.attributes
-                0x00000000000000d0       0x10 kernel/fs/fat/dir.o
+                0x00000000000000d0       0x10 kernel/fs/ext2/ext2.o
  .gnu.attributes
-                0x00000000000000e0       0x10 kernel/fs/fat/debug.o
+                0x00000000000000e0       0x10 kernel/fs/ext2/usr.o
  .gnu.attributes
-                0x00000000000000f0       0x10 kernel/fs/fat/fat.o
+                0x00000000000000f0       0x10 kernel/fs/debug.o
  .gnu.attributes
-                0x0000000000000100       0x10 kernel/fs/fat/usr.o
+                0x0000000000000100       0x10 kernel/fs/ext2_utils.o
  .gnu.attributes
-                0x0000000000000110       0x10 kernel/fs/fat/utils.o
+                0x0000000000000110       0x10 kernel/fs/fat/dir.o
  .gnu.attributes
-                0x0000000000000120       0x10 kernel/fs/fscache/fscache.o
+                0x0000000000000120       0x10 kernel/fs/fat/fat.o
  .gnu.attributes
-                0x0000000000000130       0x10 kernel/pc/page.o
+                0x0000000000000130       0x10 kernel/fs/fat/usr.o
  .gnu.attributes
-                0x0000000000000140       0x10 kernel/pc/switch_ex.o
+                0x0000000000000140       0x10 kernel/fs/fat_utils.o
  .gnu.attributes
-                0x0000000000000150       0x10 kernel/pc/enter_user_pc.o
+                0x0000000000000150       0x10 kernel/fs/utils.o
  .gnu.attributes
-                0x0000000000000160       0x10 kernel/pc/pc.o
+                0x0000000000000160       0x10 kernel/fs/fscache/fscache.o
  .gnu.attributes
-                0x0000000000000170       0x10 kernel/pc/pid.o
+                0x0000000000000170       0x10 kernel/pc/page.o
  .gnu.attributes
-                0x0000000000000180       0x10 kernel/lock/lock.o
+                0x0000000000000180       0x10 kernel/pc/switch_ex.o
  .gnu.attributes
-                0x0000000000000190       0x10 kernel/vfs/ext2/ext2_super_operations.o
+                0x0000000000000190       0x10 kernel/pc/enter_user_pc.o
  .gnu.attributes
-                0x00000000000001a0       0x10 kernel/vfs/ext2/ext2_inode_operations.o
+                0x00000000000001a0       0x10 kernel/pc/pc.o
  .gnu.attributes
-                0x00000000000001b0       0x10 kernel/vfs/ext2/ext2_utils.o
+                0x00000000000001b0       0x10 kernel/pc/pid.o
  .gnu.attributes
-                0x00000000000001c0       0x10 kernel/vfs/ext2/ext2_dentry_operations.o
+                0x00000000000001c0       0x10 kernel/lock/lock.o
  .gnu.attributes
-                0x00000000000001d0       0x10 kernel/vfs/ext2/ext2_init.o
+                0x00000000000001d0       0x10 kernel/vfs/ext2/ext2_super_operations.o
  .gnu.attributes
-                0x00000000000001e0       0x10 kernel/vfs/ext2/ext2_file_operations.o
+                0x00000000000001e0       0x10 kernel/vfs/ext2/ext2_inode_operations.o
  .gnu.attributes
-                0x00000000000001f0       0x10 kernel/vfs/ext2/ext2_address_space_operations.o
+                0x00000000000001f0       0x10 kernel/vfs/ext2/ext2_utils.o
  .gnu.attributes
-                0x0000000000000200       0x10 kernel/vfs/vfscache.o
+                0x0000000000000200       0x10 kernel/vfs/ext2/ext2_dentry_operations.o
  .gnu.attributes
-                0x0000000000000210       0x10 kernel/vfs/mount.o
+                0x0000000000000210       0x10 kernel/vfs/ext2/ext2_init.o
  .gnu.attributes
-                0x0000000000000220       0x10 kernel/vfs/vfs_init.o
+                0x0000000000000220       0x10 kernel/vfs/ext2/ext2_file_operations.o
  .gnu.attributes
-                0x0000000000000230       0x10 kernel/vfs/vfs_primitives/open.o
+                0x0000000000000230       0x10 kernel/vfs/ext2/ext2_address_space_operations.o
  .gnu.attributes
-                0x0000000000000240       0x10 kernel/vfs/vfs_primitives/read_write.o
+                0x0000000000000240       0x10 kernel/vfs/vfscache.o
  .gnu.attributes
-                0x0000000000000250       0x10 kernel/vfs/usr.o
+                0x0000000000000250       0x10 kernel/vfs/mount.o
  .gnu.attributes
-                0x0000000000000260       0x10 kernel/vfs/utils.o
+                0x0000000000000260       0x10 kernel/vfs/vfs_init.o
  .gnu.attributes
-                0x0000000000000270       0x10 kernel/vfs/fat32/fat32_inode_operations.o
+                0x0000000000000270       0x10 kernel/vfs/vfs_primitives/open.o
  .gnu.attributes
-                0x0000000000000280       0x10 kernel/vfs/fat32/fat32_dentry_operations.o
+                0x0000000000000280       0x10 kernel/vfs/vfs_primitives/read_write.o
  .gnu.attributes
-                0x0000000000000290       0x10 kernel/vfs/fat32/fat32_utils.o
+                0x0000000000000290       0x10 kernel/vfs/usr.o
  .gnu.attributes
-                0x00000000000002a0       0x10 kernel/vfs/fat32/fat32_init.o
+                0x00000000000002a0       0x10 kernel/vfs/utils.o
  .gnu.attributes
-                0x00000000000002b0       0x10 kernel/vfs/fat32/fat32_file_operations.o
+                0x00000000000002b0       0x10 kernel/vfs/fat32/fat32_inode_operations.o
  .gnu.attributes
-                0x00000000000002c0       0x10 kernel/vfs/fat32/fat32_address_space_operations.o
+                0x00000000000002c0       0x10 kernel/vfs/fat32/fat32_dentry_operations.o
  .gnu.attributes
-                0x00000000000002d0       0x10 kernel/vfs/fat32/fat32_super_operations.o
+                0x00000000000002d0       0x10 kernel/vfs/fat32/fat32_utils.o
  .gnu.attributes
-                0x00000000000002e0       0x10 kernel/mm/myslab.o
+                0x00000000000002e0       0x10 kernel/vfs/fat32/fat32_init.o
  .gnu.attributes
-                0x00000000000002f0       0x10 kernel/mm/mybuddy.o
+                0x00000000000002f0       0x10 kernel/vfs/fat32/fat32_file_operations.o
  .gnu.attributes
-                0x0000000000000300       0x10 kernel/mm/mybootmm.o
+                0x0000000000000300       0x10 kernel/vfs/fat32/fat32_address_space_operations.o
  .gnu.attributes
-                0x0000000000000310       0x10 kernel/init.o
+                0x0000000000000310       0x10 kernel/vfs/fat32/fat32_super_operations.o
  .gnu.attributes
-                0x0000000000000320       0x10 utils/assert.o
+                0x0000000000000320       0x10 kernel/mm/myslab.o
  .gnu.attributes
-                0x0000000000000330       0x10 utils/log.o
+                0x0000000000000330       0x10 kernel/mm/mybuddy.o
  .gnu.attributes
-                0x0000000000000340       0x10 utils/utils.o
+                0x0000000000000340       0x10 kernel/mm/mybootmm.o
  .gnu.attributes
-                0x0000000000000350       0x10 usr/exec.o
+                0x0000000000000350       0x10 kernel/init.o
  .gnu.attributes
-                0x0000000000000360       0x10 usr/myvi.o
+                0x0000000000000360       0x10 utils/assert.o
  .gnu.attributes
-                0x0000000000000370       0x10 usr/ls.o
+                0x0000000000000370       0x10 utils/log.o
  .gnu.attributes
-                0x0000000000000380       0x10 usr/ps.o
+                0x0000000000000380       0x10 utils/utils.o
+ .gnu.attributes
+                0x0000000000000390       0x10 usr/exec.o
+ .gnu.attributes
+                0x00000000000003a0       0x10 usr/myvi.o
+ .gnu.attributes
+                0x00000000000003b0       0x10 usr/ls.o
+ .gnu.attributes
+                0x00000000000003c0       0x10 usr/ps.o
 
 .mdebug.abi32   0x0000000000000000        0x0
  .mdebug.abi32  0x0000000000000000        0x0 arch/mips32/arch.o
@@ -1340,11 +1384,15 @@ Linker script and memory map
  .mdebug.abi32  0x0000000000000000        0x0 kernel/driver/vga.o
  .mdebug.abi32  0x0000000000000000        0x0 kernel/driver/sd.o
  .mdebug.abi32  0x0000000000000000        0x0 kernel/vm/vm.o
+ .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/ext2/ext2.o
+ .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/ext2/usr.o
+ .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/debug.o
+ .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/ext2_utils.o
  .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/fat/dir.o
- .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/fat/debug.o
  .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/fat/fat.o
  .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/fat/usr.o
- .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/fat/utils.o
+ .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/fat_utils.o
+ .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/utils.o
  .mdebug.abi32  0x0000000000000000        0x0 kernel/fs/fscache/fscache.o
  .mdebug.abi32  0x0000000000000000        0x0 kernel/pc/page.o
  .mdebug.abi32  0x0000000000000000        0x0 kernel/pc/pc.o
@@ -1445,7 +1493,7 @@ Linker script and memory map
  *(.gptab.bss)
  *(.gptab.sbss)
 
-.pdr            0x0000000000000000     0x2c60
+.pdr            0x0000000000000000     0x2ca0
  *(.pdr)
  .pdr           0x0000000000000000        0x0 arch/mips32/start.o
  .pdr           0x0000000000000000       0x20 arch/mips32/arch.o
@@ -1460,50 +1508,54 @@ Linker script and memory map
  .pdr           0x0000000000000480       0xa0 kernel/driver/sd.o
  .pdr           0x0000000000000520      0x1a0 kernel/vm/vm.o
  .pdr           0x00000000000006c0        0x0 kernel/vm/tlb.o
- .pdr           0x00000000000006c0       0x40 kernel/fs/fat/dir.o
- .pdr           0x0000000000000700        0x0 kernel/fs/fat/debug.o
- .pdr           0x0000000000000700      0x2a0 kernel/fs/fat/fat.o
- .pdr           0x00000000000009a0       0x80 kernel/fs/fat/usr.o
- .pdr           0x0000000000000a20      0x120 kernel/fs/fat/utils.o
- .pdr           0x0000000000000b40      0x100 kernel/fs/fscache/fscache.o
- .pdr           0x0000000000000c40       0x40 kernel/pc/page.o
- .pdr           0x0000000000000c80        0x0 kernel/pc/switch_ex.o
- .pdr           0x0000000000000c80        0x0 kernel/pc/enter_user_pc.o
- .pdr           0x0000000000000c80      0x540 kernel/pc/pc.o
- .pdr           0x00000000000011c0       0x80 kernel/pc/pid.o
- .pdr           0x0000000000001240       0x80 kernel/lock/lock.o
- .pdr           0x00000000000012c0       0xa0 kernel/vfs/ext2/ext2_super_operations.o
- .pdr           0x0000000000001360      0x100 kernel/vfs/ext2/ext2_inode_operations.o
- .pdr           0x0000000000001460       0x40 kernel/vfs/ext2/ext2_utils.o
- .pdr           0x00000000000014a0        0x0 kernel/vfs/ext2/ext2_dentry_operations.o
- .pdr           0x00000000000014a0       0x80 kernel/vfs/ext2/ext2_init.o
- .pdr           0x0000000000001520       0x80 kernel/vfs/ext2/ext2_file_operations.o
- .pdr           0x00000000000015a0       0x60 kernel/vfs/ext2/ext2_address_space_operations.o
- .pdr           0x0000000000001600      0x2c0 kernel/vfs/vfscache.o
- .pdr           0x00000000000018c0       0x60 kernel/vfs/mount.o
- .pdr           0x0000000000001920       0x40 kernel/vfs/vfs_init.o
- .pdr           0x0000000000001960      0x1a0 kernel/vfs/vfs_primitives/open.o
- .pdr           0x0000000000001b00      0x100 kernel/vfs/vfs_primitives/read_write.o
- .pdr           0x0000000000001c00       0xc0 kernel/vfs/usr.o
- .pdr           0x0000000000001cc0      0x140 kernel/vfs/utils.o
- .pdr           0x0000000000001e00       0xa0 kernel/vfs/fat32/fat32_inode_operations.o
- .pdr           0x0000000000001ea0        0x0 kernel/vfs/fat32/fat32_dentry_operations.o
- .pdr           0x0000000000001ea0       0x40 kernel/vfs/fat32/fat32_utils.o
- .pdr           0x0000000000001ee0       0x80 kernel/vfs/fat32/fat32_init.o
- .pdr           0x0000000000001f60       0x80 kernel/vfs/fat32/fat32_file_operations.o
- .pdr           0x0000000000001fe0       0x60 kernel/vfs/fat32/fat32_address_space_operations.o
- .pdr           0x0000000000002040       0xa0 kernel/vfs/fat32/fat32_super_operations.o
- .pdr           0x00000000000020e0      0x240 kernel/mm/myslab.o
- .pdr           0x0000000000002320      0x1a0 kernel/mm/mybuddy.o
- .pdr           0x00000000000024c0      0x140 kernel/mm/mybootmm.o
- .pdr           0x0000000000002600       0x60 kernel/init.o
- .pdr           0x0000000000002660       0x20 utils/assert.o
- .pdr           0x0000000000002680       0xa0 utils/log.o
- .pdr           0x0000000000002720      0x140 utils/utils.o
- .pdr           0x0000000000002860       0x20 usr/exec.o
- .pdr           0x0000000000002880      0x280 usr/myvi.o
- .pdr           0x0000000000002b00       0x80 usr/ls.o
- .pdr           0x0000000000002b80       0xe0 usr/ps.o
+ .pdr           0x00000000000006c0       0x20 kernel/fs/ext2/ext2.o
+ .pdr           0x00000000000006e0        0x0 kernel/fs/ext2/usr.o
+ .pdr           0x00000000000006e0        0x0 kernel/fs/debug.o
+ .pdr           0x00000000000006e0       0x60 kernel/fs/ext2_utils.o
+ .pdr           0x0000000000000740       0x40 kernel/fs/fat/dir.o
+ .pdr           0x0000000000000780      0x2a0 kernel/fs/fat/fat.o
+ .pdr           0x0000000000000a20       0x80 kernel/fs/fat/usr.o
+ .pdr           0x0000000000000aa0      0x100 kernel/fs/fat_utils.o
+ .pdr           0x0000000000000ba0       0x20 kernel/fs/utils.o
+ .pdr           0x0000000000000bc0      0x100 kernel/fs/fscache/fscache.o
+ .pdr           0x0000000000000cc0       0x40 kernel/pc/page.o
+ .pdr           0x0000000000000d00        0x0 kernel/pc/switch_ex.o
+ .pdr           0x0000000000000d00        0x0 kernel/pc/enter_user_pc.o
+ .pdr           0x0000000000000d00      0x500 kernel/pc/pc.o
+ .pdr           0x0000000000001200       0x80 kernel/pc/pid.o
+ .pdr           0x0000000000001280       0x80 kernel/lock/lock.o
+ .pdr           0x0000000000001300       0xa0 kernel/vfs/ext2/ext2_super_operations.o
+ .pdr           0x00000000000013a0      0x100 kernel/vfs/ext2/ext2_inode_operations.o
+ .pdr           0x00000000000014a0       0x40 kernel/vfs/ext2/ext2_utils.o
+ .pdr           0x00000000000014e0        0x0 kernel/vfs/ext2/ext2_dentry_operations.o
+ .pdr           0x00000000000014e0       0x80 kernel/vfs/ext2/ext2_init.o
+ .pdr           0x0000000000001560       0x80 kernel/vfs/ext2/ext2_file_operations.o
+ .pdr           0x00000000000015e0       0x60 kernel/vfs/ext2/ext2_address_space_operations.o
+ .pdr           0x0000000000001640      0x2c0 kernel/vfs/vfscache.o
+ .pdr           0x0000000000001900       0x60 kernel/vfs/mount.o
+ .pdr           0x0000000000001960       0x40 kernel/vfs/vfs_init.o
+ .pdr           0x00000000000019a0      0x1a0 kernel/vfs/vfs_primitives/open.o
+ .pdr           0x0000000000001b40      0x100 kernel/vfs/vfs_primitives/read_write.o
+ .pdr           0x0000000000001c40       0xc0 kernel/vfs/usr.o
+ .pdr           0x0000000000001d00      0x140 kernel/vfs/utils.o
+ .pdr           0x0000000000001e40       0xa0 kernel/vfs/fat32/fat32_inode_operations.o
+ .pdr           0x0000000000001ee0        0x0 kernel/vfs/fat32/fat32_dentry_operations.o
+ .pdr           0x0000000000001ee0       0x40 kernel/vfs/fat32/fat32_utils.o
+ .pdr           0x0000000000001f20       0x80 kernel/vfs/fat32/fat32_init.o
+ .pdr           0x0000000000001fa0       0x80 kernel/vfs/fat32/fat32_file_operations.o
+ .pdr           0x0000000000002020       0x60 kernel/vfs/fat32/fat32_address_space_operations.o
+ .pdr           0x0000000000002080       0xa0 kernel/vfs/fat32/fat32_super_operations.o
+ .pdr           0x0000000000002120      0x240 kernel/mm/myslab.o
+ .pdr           0x0000000000002360      0x1a0 kernel/mm/mybuddy.o
+ .pdr           0x0000000000002500      0x140 kernel/mm/mybootmm.o
+ .pdr           0x0000000000002640       0x60 kernel/init.o
+ .pdr           0x00000000000026a0       0x20 utils/assert.o
+ .pdr           0x00000000000026c0       0xa0 utils/log.o
+ .pdr           0x0000000000002760      0x140 utils/utils.o
+ .pdr           0x00000000000028a0       0x20 usr/exec.o
+ .pdr           0x00000000000028c0      0x280 usr/myvi.o
+ .pdr           0x0000000000002b40       0x80 usr/ls.o
+ .pdr           0x0000000000002bc0       0xe0 usr/ps.o
 LOAD arch/mips32/start.o
 LOAD arch/mips32/arch.o
 LOAD arch/mips32/page.o
@@ -1517,11 +1569,15 @@ LOAD kernel/driver/vga.o
 LOAD kernel/driver/sd.o
 LOAD kernel/vm/vm.o
 LOAD kernel/vm/tlb.o
+LOAD kernel/fs/ext2/ext2.o
+LOAD kernel/fs/ext2/usr.o
+LOAD kernel/fs/debug.o
+LOAD kernel/fs/ext2_utils.o
 LOAD kernel/fs/fat/dir.o
-LOAD kernel/fs/fat/debug.o
 LOAD kernel/fs/fat/fat.o
 LOAD kernel/fs/fat/usr.o
-LOAD kernel/fs/fat/utils.o
+LOAD kernel/fs/fat_utils.o
+LOAD kernel/fs/utils.o
 LOAD kernel/fs/fscache/fscache.o
 LOAD kernel/pc/page.o
 LOAD kernel/pc/switch_ex.o

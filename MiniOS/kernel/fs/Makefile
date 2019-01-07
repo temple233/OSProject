@@ -1,4 +1,4 @@
-OBJS := ext2_utils.o fat32_tils.o utils.o
+OBJS := ext2_utils.o fat_utils.o utils.o debug.o
 
 DIRS := fat fscache ext2
 

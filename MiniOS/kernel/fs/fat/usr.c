@@ -153,7 +153,7 @@ u32 fs_cat_fat(u8 *path) {
     }
 
     /* Read */
-    u32 file_size = get_entry_filesize(cat_file.entry.data);
+    u32 file_size = get_entry_filesize_fat(cat_file.entry.data);
     u8 *buf = (u8 *)kmalloc(file_size + 1);
     fs_read_fat(&cat_file, buf, file_size);
     buf[file_size] = 0;

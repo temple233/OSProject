@@ -9,7 +9,7 @@
 #include <zjunix/log.h>
 
 #include <intr.h>
-#include "debug.h"
+#include "../debug.h"
 // fat.h also zjunix/fs/fat.h
 #include "fat.h"
 

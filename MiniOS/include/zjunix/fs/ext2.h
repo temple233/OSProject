@@ -2,6 +2,7 @@
 #define _ZJUNIX_FS_EXT_2_H
 
 #include <zjunix/type.h>
+#include <zjunix/fs/fscache.h>
 
 #define                 EXT2_BOOT_BLOCK_SECT                2
 #define                 EXT2_SUPER_BLOCK_SECT               2
@@ -16,6 +17,9 @@
 #define                 EXT2_BLOCK_ADDR_SHIFT               2
 #define                 MAX_DIRENT_NUM                      128
 
+/* 4k data buffer number in each file struct */
+#define LOCAL_DATA_BUF_NUM 4
+
 /**
  * ext2 meta information
  */
@@ -29,8 +33,89 @@ struct ext2_base_information {
     } sb;                                   // data    
 };
 
+/**
+ * ext2 super block
+ * in disk
+ */
+struct ext2_super {
+    u32                 inode_num;                          // inodeÊı
+    u32                 block_num;                          // ¿éÊı
+    u32                 res_block_num;                      // ±£Áô¿éÊı
+    u32                 free_block_num;                     // ¿ÕÏĞ¿éÊı
+    u32                 free_inode_num;                     // ¿ÕÏĞinodeÊı
+    u32                 first_data_block_no;                // µÚÒ»¸öÊı¾İ¿éºÅ
+    u32                 block_size;                         // ¿é³¤¶È£¨´Ó1K¿ªÊ¼µÄÒÆÎ»Êı£©
+    u32                 slice_size;                         // Æ¬³¤¶È£¨´Ó1K¿ªÊ¼µÄÒÆÎ»Êı£©
+    u32                 blocks_per_group;                   // Ã¿×é¿éÊı
+    u32                 slices_per_group;                   // Ã¿×éÆ¬Êı
+    u32                 inodes_per_group;                   // Ã¿×éindoesÊı
+    u32                 install_time;                       // °²×°Ê±¼ä
+    u32                 last_write_in;                      // ×îºóĞ´ÈëÊ±¼ä
+    u16                 install_count;                      // °²×°¼ÆÊı
+    u16                 max_install_count;                  // ×î´ó°²×°Êı
+    u16                 magic;                              // Ä§Êı
+    u16                 state;                              // ×´Ì¬
+    u16                 err_action;                         // ³ö´í¶¯×÷
+    u16                 edition_change_mark;                // ¸Ä°æ±êÖ¾
+    u32                 last_check;                         // ×îºó¼ì²âÊ±¼ä
+    u32                 max_check_interval;                 // ×î´ó¼ì²â¼ä¸ô
+    u32                 operating_system;                   // ²Ù×÷ÏµÍ³
+    u32                 edition_mark;                       // °æ±¾±êÖ¾
+    u16                 uid;                                // uid
+    u16                 gid;                                // pid
+    u32                 first_inode;                        // µÚÒ»¸ö·Ç±£ÁôµÄinode
+    u16                 inode_size;                         // inodeµÄ´óĞ¡
+};
+
+// EXT2 dentry
+// in disk
+struct ext2_dir_entry {
+	u32	                ino;                                // ÎÄ¼şµÄinodeºÅ
+	u16                 rec_len;                            // Ä¿Â¼Ïî³¤¶È£¨×Ö½Ú£©
+    u8	                name_len;                           // Ãû×Ö³¤¶È£¨×Ö½Ú£©
+    u8                  file_type;                          // ÎÄ¼şÀàĞÍ
+	char	            name[EXT2_NAME_LEN];                // Ãû×Ö
+};
+
+// EXT2 GDT
+// in disk
+struct ext2_group_desc {
+	u32	                block_bitmap;                       // ¿éÎ»Í¼ËùÔÚ¿é
+	u32	                inode_bitmap;                       // inodeÎ»Í¼ËùÔÚ¿é
+	u32	                inode_table;                        // inodeÁĞ±íËùÔÚ¿é
+	u16	                free_blocks_count;                  // ¿ÕÏĞ¿éÊı
+	u16	                free_inodes_count;                  // ¿ÕÏĞ½ÚµãÊı
+	u16	                used_dirs_count;                    // Ä¿Â¼Êı
+	u16	                pad;                                // ÒÔÏÂ¾ùÎª±£Áô
+	u32	                reserved[3];
+};
+
+// EXT2 inode
+// in disk
+struct ext2_inode {
+	u16	                i_mode;                             // ÎÄ¼şÄ£Ê½
+	u16	                i_uid;                              // UIDµÄµÍ16Î»
+	u32	                i_size;                             // ÎÄ¼ş´óĞ¡£¨×Ö½ÚÊı£©
+	u32	                i_atime;                            // ×î½ü·ÃÎÊÊ±¼ä
+	u32	                i_ctime;                            // ´´½¨Ê±¼ä
+	u32	                i_mtime;                            // ĞŞ¸ÄÊ±¼ä
+	u32	                i_dtime;                            // É¾³ıÊ±¼ä
+	u16	                i_gid;                              // GIDµÄµÍ16Î»
+	u16	                i_links_count;                      // Á´½Ó¼ÆÊı
+	u32	                i_blocks;                           // ¹ØÁªµÄ¿éÊı
+	u32	                i_flags;                            // ´ò¿ªµÄ±ê¼Ç
+	u32                 osd1;                               // Óë²Ù×÷ÏµÍ³Ïà¹Ø1
+	u32	                i_block[EXT2_N_BLOCKS];             // ´æ·ÅËùÓĞÏà¹ØµÄ¿éµØÖ·
+	u32	                i_generation;                       // £¨NFSÓÃ£©ÎÄ¼şµÄ°æ±¾
+	u32	                i_file_acl;                         // ÎÄ¼şµÄACL
+	u32	                i_dir_acl;                          // Ä¿Â¼µÄACL
+    u32	                i_faddr;                            // ËéÆ¬µØÖ·
+    u32                 osd2[3];                            // Óë²Ù×÷ÏµÍ³Ïà¹Ø2
+};
+
+
 /* ext2 file struct */
-typedef struct fat_file {
+typedef struct ext2_file {
     unsigned char path[256];
     /* Current file pointer */
     unsigned long loc;
@@ -38,105 +123,30 @@ typedef struct fat_file {
     unsigned long dir_entry_pos;
     unsigned long dir_entry_sector;
     /* current directory entry */
-    struct ext2_dir_entry;
+    struct ext2_dir_entry dir_entry;
+    struct ext2_inode inode;
     /* Buffer clock head */
     unsigned long clock_head;
     /* For normal FAT32, cluster size is 4k */
     BUF_4K data_buf[LOCAL_DATA_BUF_NUM];
-} FILE_ext2;
+} FILE_EXT2;
 
-/**
- * ext2 super block
- * in disk
- */
-struct ext2_super {
-    u32 inode_num;                          // inodeæ•°
-    u32                 block_num;                          // å—æ•°
-    u32                 res_block_num;                      // ä¿ç•™å—æ•°
-    u32                 free_block_num;                     // ç©ºé—²å—æ•°
-    u32                 free_inode_num;                     // ç©ºé—²inodeæ•°
-    u32                 first_data_block_no;                // ç¬¬ä¸€ä¸ªæ•°æ®å—å·
-    u32                 block_size;                         // å—é•¿åº¦ï¼ˆä»1Kå¼€å§‹çš„ç§»ä½æ•°ï¼‰
-    u32                 slice_size;                         // ç‰‡é•¿åº¦ï¼ˆä»1Kå¼€å§‹çš„ç§»ä½æ•°ï¼‰
-    u32                 blocks_per_group;                   // æ¯ç»„å—æ•°
-    u32                 slices_per_group;                   // æ¯ç»„ç‰‡æ•°
-    u32                 inodes_per_group;                   // æ¯ç»„indoesæ•°
-    u32                 install_time;                       // å®‰è£…æ—¶é—´
-    u32                 last_write_in;                      // æœ€åå†™å…¥æ—¶é—´
-    u16                 install_count;                      // å®‰è£…è®¡æ•°
-    u16                 max_install_count;                  // æœ€å¤§å®‰è£…æ•°
-    u16                 magic;                              // é­”æ•°
-    u16                 state;                              // çŠ¶æ€
-    u16                 err_action;                         // å‡ºé”™åŠ¨ä½œ
-    u16                 edition_change_mark;                // æ”¹ç‰ˆæ ‡å¿—
-    u32                 last_check;                         // æœ€åæ£€æµ‹æ—¶é—´
-    u32                 max_check_interval;                 // æœ€å¤§æ£€æµ‹é—´éš”
-    u32                 operating_system;                   // æ“ä½œç³»ç»Ÿ
-    u32                 edition_mark;                       // ç‰ˆæœ¬æ ‡å¿—
-    u16                 uid;                                // uid
-    u16                 gid;                                // pid
-    u32                 first_inode;                        // ç¬¬ä¸€ä¸ªéä¿ç•™çš„inode
-    u16                 inode_size;                         // inodeçš„å¤§å°
-};
 
-// EXT2 æ–‡ä»¶ç³»ç»Ÿç›®å½•é¡¹
-struct ext2_dir_entry {
-	u32	                ino;                                // æ–‡ä»¶çš„inodeå·
-	u16                 rec_len;                            // ç›®å½•é¡¹é•¿åº¦ï¼ˆå­—èŠ‚ï¼‰
-    u8	                name_len;                           // åå­—é•¿åº¦ï¼ˆå­—èŠ‚ï¼‰
-    u8                  file_type;                          // æ–‡ä»¶ç±»å‹
-	char	            name[EXT2_NAME_LEN];                // åå­—
-};
-
-// EXT2 ç»„æè¿°ç¬¦
-struct ext2_group_desc {
-	u32	                block_bitmap;                       // å—ä½å›¾æ‰€åœ¨å—
-	u32	                inode_bitmap;                       // inodeä½å›¾æ‰€åœ¨å—
-	u32	                inode_table;                        // inodeåˆ—è¡¨æ‰€åœ¨å—
-	u16	                free_blocks_count;                  // ç©ºé—²å—æ•°
-	u16	                free_inodes_count;                  // ç©ºé—²èŠ‚ç‚¹æ•°
-	u16	                used_dirs_count;                    // ç›®å½•æ•°
-	u16	                pad;                                // ä»¥ä¸‹å‡ä¸ºä¿ç•™
-	u32	                reserved[3];
-};
-
-// EXT2 å†…éƒ¨inode
-struct ext2_inode {
-	u16	                i_mode;                             // æ–‡ä»¶æ¨¡å¼
-	u16	                i_uid;                              // UIDçš„ä½16ä½
-	u32	                i_size;                             // æ–‡ä»¶å¤§å°ï¼ˆå­—èŠ‚æ•°ï¼‰
-	u32	                i_atime;                            // æœ€è¿‘è®¿é—®æ—¶é—´
-	u32	                i_ctime;                            // åˆ›å»ºæ—¶é—´
-	u32	                i_mtime;                            // ä¿®æ”¹æ—¶é—´
-	u32	                i_dtime;                            // åˆ é™¤æ—¶é—´
-	u16	                i_gid;                              // GIDçš„ä½16ä½
-	u16	                i_links_count;                      // é“¾æ¥è®¡æ•°
-	u32	                i_blocks;                           // å…³è”çš„å—æ•°
-	u32	                i_flags;                            // æ‰“å¼€çš„æ ‡è®°
-	u32                 osd1;                               // ä¸æ“ä½œç³»ç»Ÿç›¸å…³1
-	u32	                i_block[EXT2_N_BLOCKS];             // å­˜æ”¾æ‰€æœ‰ç›¸å…³çš„å—åœ°å€
-	u32	                i_generation;                       // ï¼ˆNFSç”¨ï¼‰æ–‡ä»¶çš„ç‰ˆæœ¬
-	u32	                i_file_acl;                         // æ–‡ä»¶çš„ACL
-	u32	                i_dir_acl;                          // ç›®å½•çš„ACL
-    u32	                i_faddr;                            // ç¢ç‰‡åœ°å€
-    u32                 osd2[3];                            // ä¸æ“ä½œç³»ç»Ÿç›¸å…³2
-};
-
-unsigned long fs_find_ext2(FILE_ext2 *file);
+unsigned long fs_find_ext2(FILE_EXT2 *file);
 
 unsigned long init_fs_ext2();
 
-unsigned long fs_open_ext2(FILE_ext2 *file, unsigned char *filename);
+unsigned long fs_open_ext2(FILE_EXT2 *file, unsigned char *filename);
 
-unsigned long fs_close_ext2(FILE_ext2 *file);
+unsigned long fs_close_ext2(FILE_EXT2 *file);
 
-unsigned long fs_read_ext2(FILE_ext2 *file, unsigned char *buf, unsigned long count);
+unsigned long fs_read_ext2(FILE_EXT2 *file, unsigned char *buf, unsigned long count);
 
-unsigned long fs_write_ext2(FILE_ext2 *file, const unsigned char *buf, unsigned long count);
+unsigned long fs_write_ext2(FILE_EXT2 *file, const unsigned char *buf, unsigned long count);
 
 unsigned long fs_fflush_ext2();
 
-void fs_lseek_ext2(FILE_ext2 *file, unsigned long new_loc);
+void fs_lseek_ext2(FILE_EXT2 *file, unsigned long new_loc);
 
 unsigned long fs_create_ext2(unsigned char *filename);
 
