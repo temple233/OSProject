@@ -13,18 +13,29 @@
 // fat.h also zjunix/fs/fat.h
 #include "fat.h"
 
+#define DIR_DATA_BUF_NUM 4
 /* fat buffer clock head */
+
+static u8 filename11[13];
+static u8 new_alloc_empty[PAGE_SIZE];
+
+/**
+ * .data
+ * .dss
+ * That's OK!
+ */
+
+// for cache
+struct fs_info fat_info;
 u32 fat_clock_head = 0;
 BUF_512 fat_buf[FAT_BUF_NUM];
 
-u8 filename11[13];
-u8 new_alloc_empty[PAGE_SIZE];
-
-#define DIR_DATA_BUF_NUM 4
+// for dir.c
 BUF_512 dir_data_buf[DIR_DATA_BUF_NUM];
 u32 dir_data_clock_head = 0;
 
-struct fs_info fat_info;
+// for usr.c ps.c
+u8 cwd_name_fat[64];
 
 static inline u32 init_fat_info() {
     u8 meta_buf[512];
@@ -120,10 +131,12 @@ u32 init_fs_fat() {
         goto fs_init_err;
     init_fat_buf();
     init_dir_buf();
+    kernel_memset(cwd_name_fat, 0, 64);
+    cwd_name_fat[0] = '/';
     return 0;
 
 fs_init_err:
-    log(LOG_FAIL, "File system init fail.");
+    log(LOG_FAIL, "FAT32 File system init fail");
     return 1;
 }
 
@@ -169,43 +182,6 @@ read_fat_sector_err:
     return 0xffffffff;
 }
 
-/* path convertion */
-u32 fs_next_slash(u8 *f) {
-    u32 i, j, k;
-    u8 chr11[13];
-    for (i = 0; (*(f + i) != 0) && (*(f + i) != '/'); i++)
-        ;
-
-    for (j = 0; j < 12; j++) {
-        chr11[j] = 0;
-        filename11[j] = 0x20;
-    }
-    for (j = 0; j < 12 && j < i; j++) {
-        chr11[j] = *(f + j);
-        if (chr11[j] >= 'a' && chr11[j] <= 'z')
-            chr11[j] = (u8)(chr11[j] - 'a' + 'A');
-    }
-    chr11[12] = 0;
-
-    for (j = 0; (chr11[j] != 0) && (j < 12); j++) {
-        if (chr11[j] == '.')
-            break;
-
-        filename11[j] = chr11[j];
-    }
-
-    if (chr11[j] == '.') {
-        j++;
-        for (k = 8; (chr11[j] != 0) && (j < 12) && (k < 11); j++, k++) {
-            filename11[k] = chr11[j];
-        }
-    }
-
-    filename11[11] = 0;
-
-    return i;
-}
-
 /* strcmp */
 u32 fs_cmp_filename(const u8 *f1, const u8 *f2) {
     u32 i;
@@ -238,7 +214,7 @@ u32 fs_find_fat(FILE *file) {
     while (1) {
         file->dir_entry_pos = 0xFFFFFFFF;
 
-        next_slash = fs_next_slash(f);
+        next_slash = fs_next_slash(f, filename11);
 
         while (1) {
             for (sec = 1; sec <= fat_info.BPB.attr.sectors_per_cluster; sec++) {
@@ -775,7 +751,7 @@ u32 fs_create_with_attr(u8 *filename, u8 attr) {
         file_creat.path[i - l1 - 1] = filename[i];
 
     file_creat.path[l2 - l1] = 0;
-    fs_next_slash(file_creat.path);
+    fs_next_slash(file_creat.path, filename11);
 
     dir_data_buf[index].state = 3;
 

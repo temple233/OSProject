@@ -5,7 +5,8 @@
 #include <zjunix/bootmm.h>
 #include <zjunix/buddy.h>
 #include <zjunix/fs/fat.h>
-#include <zjunix/vfs/vfs.h>
+#include <zjunix/fs/ext2.h>
+// #include <zjunix/vfs/vfs.h>
 #include <zjunix/slab.h>
 #include <zjunix/time.h>
 #include <zjunix/utils.h>
@@ -19,7 +20,9 @@ int ps_buffer_index;
 
 struct lock_t lk;
 
-extern struct dentry *pwd_dentry;
+// extern struct dentry *pwd_dentry;
+// from fat.c
+extern u8 cwd_name_fat[64];
 
 void test_proc() {
     unsigned int timestamp;
@@ -137,12 +140,13 @@ void ps() {
     ps_buffer_index = 0;
     ps_buffer[0] = 0;
     kernel_clear_screen(31);
-    // kernel_puts("PS>", VGA_WHITE, VGA_BLACK);
-    // kernel_puts("PowerShell\n", VGA_WHITE, VGA_BLACK);
-    kernel_puts("PS", VGA_GREEN, VGA_BLACK);
-    kernel_puts(":", VGA_WHITE, VGA_BLACK);
-    kernel_puts(pwd_dentry->d_name.name, VGA_CYAN, VGA_BLACK);
-    kernel_puts(">", VGA_WHITE, VGA_BLACK);
+    kernel_puts(cwd_name_fat, VGA_GREEN, VGA_BLACK);
+    kernel_puts("@PS $=% ", VGA_CYAN, VGA_BLACK);
+    // kernel_puts("PowerShell\n", VGA_CYAN, VGA_BLACK);
+    // kernel_puts("PS", VGA_GREEN, VGA_BLACK);
+    // kernel_puts(":", VGA_CYAN, VGA_BLACK);
+    // kernel_puts(pwd_dentry->d_name.name, VGA_CYAN, VGA_BLACK);
+    // kernel_puts(">", VGA_CYAN, VGA_BLACK);
     while (1) {
         c = kernel_getchar();
         if (c == '\n') {
@@ -154,12 +158,13 @@ void ps() {
             } else
                 parse_cmd();
             ps_buffer_index = 0;
-            // kernel_puts("PS>", VGA_WHITE, VGA_BLACK);
-            // kernel_puts("PowerShell\n", VGA_WHITE, VGA_BLACK);
-            kernel_puts("PS", VGA_GREEN, VGA_BLACK);
-            kernel_puts(":", VGA_WHITE, VGA_BLACK);
-            kernel_puts(pwd_dentry->d_name.name, VGA_CYAN, VGA_BLACK);
-            kernel_puts(">", VGA_WHITE, VGA_BLACK);
+            kernel_puts(cwd_name_fat, VGA_GREEN, VGA_BLACK);
+            kernel_puts("@PS $=% ", VGA_CYAN, VGA_BLACK);
+            // kernel_puts("PowerShell\n", VGA_CYAN, VGA_BLACK);
+            // kernel_puts("PS", VGA_GREEN, VGA_BLACK);
+            // kernel_puts(":", VGA_CYAN, VGA_BLACK);
+            // kernel_puts(pwd_dentry->d_name.name, VGA_CYAN, VGA_BLACK);
+            // kernel_puts(">", VGA_CYAN, VGA_BLACK);
         } else if (c == 0x08) {
             if (ps_buffer_index) {
                 ps_buffer_index--;
@@ -251,7 +256,7 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "time") == 0) {
         unsigned int init_gp;
         asm volatile("la %0, _gp\n\t" : "=r"(init_gp));
-//       pc_create(2, system_time_proc, (unsigned int)kmalloc(4096), init_gp, "time");
+//      pc_create(2, system_time_proc, (unsigned int)kmalloc(4096), init_gp, "time");
     }
     // else if (kernel_strcmp(ps_buffer, "proc") == 0) {
     //     result = proc_demo_create();
@@ -298,20 +303,21 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "sync") == 0) {
         result = sync_demo_create();
         kernel_printf("proc return with %d\n", result);
-    }
-
-    else if (kernel_strcmp(ps_buffer, "cat") == 0) {
-        result = vfs_cat(param);
+    } else if (kernel_strcmp(ps_buffer, "cat") == 0) {
+        result = fs_cat_fat(param);
     }
     else if (kernel_strcmp(ps_buffer, "rm") == 0) {
-        result = vfs_rm(param);
+        result = fs_rm_fat(param);
     }
     else if (kernel_strcmp(ps_buffer, "ls") == 0) {
-        result = vfs_ls(param);
+        result = fs_ls_fat(param);
+    } else if(kernel_strcmp(ps_buffer, "cd") == 0) {
+        result = fs_cd_fat(param);
     }
-    else if (kernel_strcmp(ps_buffer, "cd") == 0) {
-        result = vfs_cd(param);
-    }
+    /**
+     * TO-DO cd
+     * currrent directory
+     */
 
     else {
         kernel_puts(ps_buffer, 0xfff, 0);

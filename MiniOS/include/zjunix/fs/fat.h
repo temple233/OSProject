@@ -5,6 +5,7 @@
 #include "fscache.h"
 
 /* 4k data buffer number in each file struct */
+// FILE inner buffer
 #define LOCAL_DATA_BUF_NUM 4
 
 #define SECTOR_SIZE 512
@@ -133,11 +134,16 @@ u32 fs_open_dir_fat(FS_FAT_DIR *dir, u8 *filename);
 
 u32 fs_read_dir_fat(FS_FAT_DIR *dir, u8 *buf);
 
+// usr.c
 unsigned long fs_rm_fat(unsigned char *filename);
 
 unsigned long fs_mv_fat(unsigned char *src, unsigned char *dest);
 
-unsigned long fs_cat_fat(unsigned char * path);
+unsigned long fs_cat_fat(unsigned char *path);
+
+u32 fs_ls_fat(u8 *para);
+
+u32 fs_cd_fat(u8 *dirName);
 
 // utils.c
 u32 read_block(u8 *buf, u32 addr, u32 count);
@@ -153,6 +159,8 @@ void set_u16(u8 *ch, u16 num);
 void set_u32(u8 *ch, u32 num);
 
 u32 fs_wa(u32 num);
+
+u32 fs_next_slash(u8 *f, u8 *output11);
 
 // fat32_utils.c
 u32 get_start_cluster(const FILE *file);

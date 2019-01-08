@@ -1,7 +1,11 @@
 #include "fscache.h"
-#include "../../../include/zjunix/fs/fat.h"
+#include "../fat/fat.h"
+#include <zjunix/fs/ext2.h>
 
+// fat.c
 extern struct fs_info fat_info;
+// ext2.c
+extern struct ext2_base_information  ext2_info;
 
 u32 fs_victim_4k(BUF_4K *buf, u32 *clock_head, u32 size) {
     u32 i;

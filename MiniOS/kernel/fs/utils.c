@@ -43,3 +43,40 @@ u32 fs_wa(u32 num) {
     return i;
 }
 
+/* path convertion */
+u32 fs_next_slash(u8 *f, u8 *output11)
+{
+    u32 i, j, k;
+    u8 chr11[13];
+    for (i = 0; (*(f + i) != 0) && (*(f + i) != '/'); i++)
+        ;
+
+    for (j = 0; j < 12; j++) {
+        chr11[j] = 0;
+        output11[j] = 0x20;
+    }
+    for (j = 0; j < 12 && j < i; j++) {
+        chr11[j] = *(f + j);
+        if (chr11[j] >= 'a' && chr11[j] <= 'z')
+            chr11[j] = (u8)(chr11[j] - 'a' + 'A');
+    }
+    chr11[12] = 0;
+
+    for (j = 0; (chr11[j] != 0) && (j < 12); j++) {
+        if (chr11[j] == '.')
+            break;
+
+        output11[j] = chr11[j];
+    }
+
+    if (chr11[j] == '.') {
+        j++;
+        for (k = 8; (chr11[j] != 0) && (j < 12) && (k < 11); j++, k++) {
+            output11[k] = chr11[j];
+        }
+    }
+
+    output11[11] = 0;
+
+    return i;
+}

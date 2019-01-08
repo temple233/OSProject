@@ -51,26 +51,31 @@ fs_modify_fat_err:
 
 /* Determine FAT entry for cluster */
 // clus => one secetor of 8 this 
-void cluster_to_fat_entry(u32 clus, u32 *ThisFATSecNum, u32 *ThisFATEntOffset) {
+void cluster_to_fat_entry(u32 clus, u32 *ThisFATSecNum, u32 *ThisFATEntOffset)
+{
     u32 FATOffset = clus << 2;
     *ThisFATSecNum = fat_info.BPB.attr.reserved_sectors + (FATOffset >> 9) + fat_info.base_addr;
     *ThisFATEntOffset = FATOffset & 511;// 0x01ff
 }
 
 /* data cluster num <==> sector num */
-u32 fs_dataclus2sec(u32 clus) {
+u32 fs_dataclus2sec(u32 clus)
+{
     return ((clus - 2) << fs_wa(fat_info.BPB.attr.sectors_per_cluster)) + fat_info.first_data_sector;
 }
 
-u32 fs_sec2dataclus(u32 sec) {
+u32 fs_sec2dataclus(u32 sec)
+{
     return ((sec - fat_info.first_data_sector) >> fs_wa(fat_info.BPB.attr.sectors_per_cluster)) + 2;
 }
 
 
-u32 get_entry_filesize_fat(u8 *entry) {
+u32 get_entry_filesize_fat(u8 *entry)
+{
     return get_u32(entry + 28);
 }
 
-u32 get_entry_attr_fat(u8 *entry) {
+u32 get_entry_attr_fat(u8 *entry)
+{
     return entry[11];
 }
