@@ -7,7 +7,7 @@
 #include <zjunix/bootmm.h>
 #include <zjunix/buddy.h>
 #include <zjunix/fs/fat.h>
-// #include <zjunix/vfs/vfs.h>
+#include <zjunix/fs/impl/impl.h>
 #include <zjunix/fs/ext2.h>
 #include <zjunix/log.h>
 #include <zjunix/pc.h>
@@ -16,7 +16,10 @@
 #include <zjunix/time.h>
 #include "../usr/ps.h"
 
-// int init_done = 0;
+int init_done = 0;
+
+// from vfs.c
+extern struct master_boot_record *MBR;
 
 void machine_info() {
     int row;
@@ -24,7 +27,7 @@ void machine_info() {
     kernel_printf("\n%s\n", "83+666-OS");
     row = cursor_row;
     col = cursor_col;
-    cursor_row = 29;
+    cursor_row = 28;
     kernel_printf("%s\n", "Author 83+666 (C) Copyright 2019-01-01");
     kernel_printf("%s\n", "Thanks to ZJUNIX & TAs");
     cursor_row = row;
@@ -64,6 +67,7 @@ void init_kernel() {
     init_slab();
     log(LOG_OK, "Slab.");
     log(LOG_END, "Memory Modules.");
+    init_vfs();
 #ifdef FAT_DEBUG
     // FAT File system
     log(LOG_START, "FAT File System.");
@@ -73,7 +77,7 @@ void init_kernel() {
 #ifdef EXT2_DEBUG
     // EXT2 File system
     log(LOG_START, "EXT2 File System.");
-    init_fs_ext2();
+    init_fs_ext2(MBR->m_base[1]);
     log(LOG_END, "EXT2 File System.");    
 #endif
     // System call

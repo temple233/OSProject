@@ -6,7 +6,7 @@
 #include <zjunix/buddy.h>
 #include <zjunix/fs/fat.h>
 #include <zjunix/fs/ext2.h>
-// #include <zjunix/vfs/vfs.h>
+#include <zjunix/fs/impl/impl.h>
 #include <zjunix/slab.h>
 #include <zjunix/time.h>
 #include <zjunix/utils.h>
@@ -20,9 +20,19 @@ int ps_buffer_index;
 
 struct lock_t lk;
 
-// extern struct dentry *pwd_dentry;
+extern struct dentry *pwd_dentry;
 // from fat.c
 extern u8 cwd_name_fat[64];
+// from impl.c
+extern struct master_boot_record *MBR;
+
+static inline unsigned int strlen(unsigned char *str)
+{
+    unsigned int len = 0;
+    while (str[len])
+        ++len;
+    return len;
+}
 
 void test_proc() {
     unsigned int timestamp;
@@ -263,6 +273,18 @@ void parse_cmd() {
     //     kernel_printf("proc return with %d\n", result);
     // } 
     else if (kernel_strcmp(ps_buffer, "vi") == 0) {
+        assert(strlen(ps_buffer), "file name is empty!");
+
+        u8 param_buffer[64];
+        if(param[0] != '/') {
+            kernel_strcpy(param_buffer, cwd_name_fat);
+            kernel_strcpy(param_buffer, param);
+        } else {
+            kernel_strcpy(param_buffer, param);
+        }
+
+        kernel_strcpy(param, param_buffer);
+
         result = myvi(param);
         kernel_printf("vi return with %d\n", result);
     }
@@ -311,13 +333,44 @@ void parse_cmd() {
     }
     else if (kernel_strcmp(ps_buffer, "ls") == 0) {
         result = fs_ls_fat(param);
+        kernel_printf("fat_ls exit with %d\n", result);
     } else if(kernel_strcmp(ps_buffer, "cd") == 0) {
         result = fs_cd_fat(param);
+        kernel_printf("fat_cd exit with %d\n", result);
+    } else if(kernel_strcmp(ps_buffer, "mkdir") == 0) {
+        result = fs_mkdir_fat(param);
+        kernel_printf("fat_mkdir exit with %d\n", result);
     }
-    /**
-     * TO-DO cd
-     * currrent directory
-     */
+    // some ext2 command
+    else if(kernel_strcmp(ps_buffer, "ext2_dump") == 0){
+        result = fs_dump_ext2();
+    } else if(kernel_strcmp(ps_buffer, "ext2_ls") == 0) {
+        /*u8 param_bufffer[64];
+        kernel_memset(param_buffer, 0, 64);
+        kernel_strcpy(param_buffer, "/ext2");
+        if(strlen(param) && param[0] != '/') {
+            kernel_strcpy(param_buffer + strlen(param_buffer), "/");
+        }
+        kernel_strcpy(param_buffer + strlen(param_buffer), param);
+        kernel_strcpy(param, param_buffer);
+        */
+        if(strlen(param)) {
+            result = vfs_ls(param);
+        } else {
+            vfs_cd("/ext2");    
+            result = vfs_ls(param);    
+        }
+        
+        kernel_printf("ext2_ls exit with %d\n", result);
+    } else if(kernel_strcmp(ps_buffer, "ext2_cd") == 0) {
+        vfs_cd("/ext2");
+        result = vfs_cd(param);
+        kernel_printf("ext2_cd exit with %d\n", result);
+    } else if(!kernel_strcmp(ps_buffer, "ext2_cat")) {
+        vfs_cd("/ext2");
+        result = vfs_cat(param);
+        kernel_printf("ext2_cat exit with %d\n", result);
+    }
 
     else {
         kernel_puts(ps_buffer, 0xfff, 0);

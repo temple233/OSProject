@@ -1,7 +1,7 @@
 #ifndef _ZJUNIX_VFS_FAT32_H
 #define _ZJUNIX_VFS_FAT32_H
 
-#include <zjunix/vfs/vfs.h>
+#include <zjunix/fs/impl/impl.h>
 
 #define MAX_FAT32_SHORT_FILE_NAME_BASE_LEN      8
 #define MAX_FAT32_SHORT_FILE_NAME_EXT_LEN       3
@@ -67,8 +67,8 @@ struct __attribute__((__packed__)) fat_dir_entry {
 u32 init_fat32(u32);
 u32 fat32_delete_inode(struct dentry *);
 u32 fat32_write_inode(struct inode *, struct dentry *);
-struct dentry* fat32_inode_lookup(struct inode *, struct dentry *, struct file_find_helper *ffh);
-u32 fat32_create(struct inode *, struct dentry *, u32 mode, struct file_find_helper *ffh);
+struct dentry* fat32_inode_lookup(struct inode *, struct dentry *, struct nameidata *);
+u32 fat32_create(struct inode *, struct dentry *, u32 mode, struct nameidata *);
 u32 fat32_readdir(struct file *, struct getdent *);
 void fat32_convert_filename(struct qstr*, const struct qstr*, u8, u32);
 u32 fat32_readpage(struct vfs_page *);

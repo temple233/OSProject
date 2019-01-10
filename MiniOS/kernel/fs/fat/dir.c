@@ -9,6 +9,14 @@ extern BUF_512 dir_data_buf[DIR_DATA_BUF_NUM];
 extern u32 dir_data_clock_head;
 extern struct fs_info fat_info;
 
+static inline unsigned int strlen(unsigned char *str)
+{
+    unsigned int len = 0;
+    while (str[len])
+        ++len;
+    return len;
+}
+
 /* open directory */
 u32 fs_open_dir_fat(FS_FAT_DIR *dir, u8 *filename) {
     u32 index;
@@ -17,6 +25,8 @@ u32 fs_open_dir_fat(FS_FAT_DIR *dir, u8 *filename) {
     if (filename[0] != '/')
         goto fs_open_dir_err;
 
+    // / discard
+    filename[strlen(filename) - 1] = '\000';
     dir->cur_sector = fs_dataclus2sec(2);
     dir->loc = 0;
     dir->sec = 1;

@@ -40,8 +40,7 @@ struct radix_tree_root {
 #define RADIX_TREE_MAX_PATH (RADIX_TREE_INDEX_BITS/RADIX_TREE_MAP_SHIFT + 2)
 
 
-int radix_tree_insert(struct radix_tree_root *root,
-			unsigned long index, void *item);
+int radix_tree_insert(struct radix_tree_root *root, unsigned long index, void *item);
 
 /**
  *	radix_tree_lookup    -    perform lookup operation on a radix tree
@@ -65,8 +64,7 @@ void *radix_tree_lookup(struct radix_tree_root *root, unsigned long index);
  *	Returns the address of the tagged item.   Setting a tag on a not-present
  *	item is a bug.
  */
-void *radix_tree_tag_set(struct radix_tree_root *root,
-			unsigned long index, int tag);
+void *radix_tree_tag_set(struct radix_tree_root *root, unsigned long index, int tag);
 
 /**
  *	radix_tree_tag_clear - clear a tag on a radix tree node
@@ -81,11 +79,9 @@ void *radix_tree_tag_set(struct radix_tree_root *root,
  *	Returns the address of the tagged item on success, else NULL.  ie:
  *	has the same return value and semantics as radix_tree_lookup().
  */
-void *radix_tree_tag_clear(struct radix_tree_root *root,
-			unsigned long index, int tag);
+void *radix_tree_tag_clear(struct radix_tree_root *root, unsigned long index, int tag);
 
-int radix_tree_tag_get(struct radix_tree_root *root,
-			unsigned long index, int tag);
+int radix_tree_tag_get(struct radix_tree_root *root, unsigned long index, int tag);
 
 void radix_tree_init(void);
 #endif

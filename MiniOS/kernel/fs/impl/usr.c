@@ -1,20 +1,19 @@
-#include <zjunix/vfs/vfs.h>
-#include <zjunix/vfs/vfscache.h>
+#include <zjunix/fs/impl/impl.h>
+#include <zjunix/fs/impl/implcache.h>
 
 #include <driver/vga.h>
 #include <zjunix/utils.h>
 #include <zjunix/slab.h>
 
+// 外部变量
+extern struct cache                     * dcache;
+extern struct cache                     * icache;
+extern struct cache                     * pcache;
+extern struct dentry                    * pwd_dentry;
+extern struct vfsmount                  * pwd_mnt;
 
-extern struct cache *dcache;
-extern struct cache *icache;
-extern struct cache *pcache;
-extern struct dentry *pwd_dentry;
-extern struct vfsmount *pwd_mnt;
-
-/**
- * cat it
- */
+// 以下为Power shell 的接口
+// 输出文件的内容
 u32 vfs_cat(const u8 *path){
     u8 *buf;
     u32 err;
@@ -22,7 +21,7 @@ u32 vfs_cat(const u8 *path){
     u32 file_size;
     struct file *file;
     
-    // so easy
+    // 调用VFS提供的打开接口
     file = vfs_open(path, O_RDONLY, base);
     if (IS_ERR_OR_NULL(file)){
         if ( PTR_ERR(file) == -ENOENT )
@@ -30,7 +29,7 @@ u32 vfs_cat(const u8 *path){
         return PTR_ERR(file);
     }
     
-    // buf it
+    // 接下来读取文件数据区的内容到buf
     base = 0;
     file_size = file->f_dentry->d_inode->i_size;
     
@@ -38,11 +37,11 @@ u32 vfs_cat(const u8 *path){
     if ( vfs_read(file, buf, file_size, &base) != file_size )
         return 1;
 
-    // output
+    // 打印buf里面的内容
     buf[file_size] = 0;
     kernel_printf("%s\n", buf);
 
-    // close and output
+    // 关闭文件并释放内存
     err = vfs_close(file);
     if (err)
         return err;
@@ -51,15 +50,13 @@ u32 vfs_cat(const u8 *path){
     return 0;
 }
 
-/**
- * cat it
- */
+// 更改当前的工作目录
 u32 vfs_cd(const u8 *path){
     u32 err;
-    struct file_find_helper ffh;
+    struct nameidata nd;
 
-    // so easy
-    err = path_lookup(path, LOOKUP_DIRECTORY, &ffh);
+    // 调用VFS提供的查找接口
+    err = path_lookup(path, LOOKUP_DIRECTORY, &nd);
     if ( err == -ENOENT ){
         kernel_printf("No such directory!\n");
         return err;
@@ -68,23 +65,23 @@ u32 vfs_cd(const u8 *path){
         return err;
     }
 
-    // make a change
-    pwd_dentry = ffh.this_dentry;
-    pwd_mnt = ffh.mnt;
+    // 若成功则改变相应的dentry和mnt
+    pwd_dentry = nd.dentry;
+    pwd_mnt = nd.mnt;
 
     return 0;
 }
 
-/**
- * ls it
- */
+// 输出文件夹的内容
 u32 vfs_ls(const u8 *path){
     u32 i;
     u32 err;
     struct file *file;
-    struct getdent getdent;  
+    struct getdent getdent;
 
-    // so easy
+    
+
+    // 调用VFS提供的打开接口
     if (path[0] == 0)
         file = vfs_open(".", LOOKUP_DIRECTORY, 0);
     else
@@ -98,52 +95,51 @@ u32 vfs_ls(const u8 *path){
         return PTR_ERR(file);
     }
     
-    // so easy
+    // 调用具体文件系统的readir函数
     err = file->f_op->readdir(file, &getdent);
     if (err)
         return err;
     
-    // otuput
+    // 接下来往屏幕打印结果
     for ( i = 0; i < getdent.count; i++){
-        if (getdent.dirent[i].type == FT_DIR)
-            kernel_puts(getdent.dirent[i].name, VGA_CYAN, VGA_BLACK);
-        else if(getdent.dirent[i].type == FT_REG_FILE)
+        if (getdent.dirent[i].type == FT_DIR) {
             kernel_puts(getdent.dirent[i].name, VGA_WHITE, VGA_BLACK);
-        else
-            kernel_puts(getdent.dirent[i].name, VGA_GREEN, VGA_BLACK);
-        kernel_printf(" ");
+            kernel_putchar('\n', VGA_WHITE, VGA_BLACK);
+        } else if(getdent.dirent[i].type == FT_REG_FILE) {
+            kernel_puts(getdent.dirent[i].name, VGA_WHITE, VGA_BLACK);
+            kernel_putchar('\n', VGA_WHITE, VGA_BLACK);
+        } else {
+            kernel_puts(getdent.dirent[i].name, VGA_WHITE, VGA_BLACK);
+            kernel_putchar('\n', VGA_WHITE, VGA_BLACK);
+        }
     }
     kernel_printf("\n");
 
     return 0;
 }
 
-/**
- * rm it
- */
+// 删除一个文件（不能是文件夹）
 u32 vfs_rm(const u8 *path){
     u32 err;
     struct inode        *inode;
     struct dentry       *dentry;
-    struct file_find_helper ffh;
+    struct nameidata    nd;
 
-    // so easy
-    err = path_lookup(path, 0, &ffh);
+    // 调用VFS提供的查找接口
+    err = path_lookup(path, 0, &nd);
     if ( IS_ERR_VALUE(err) ){
         if ( err == -ENOENT )
             kernel_printf("File not found!\n");
         return err;
     }
     
-    // so easy
-    dentry = ffh.this_dentry;
+    // 先删除inode对应文件在外存上的相关信息
+    dentry = nd.dentry;
     err = dentry->d_inode->i_sb->s_op->delete_inode(dentry);
     if (err)
         return err;
 
-    // 
-    // leak of memory
-    //
+    // 最后只需要在缓存中删去inode即可，page和dentry都允许保留
     dentry->d_inode = 0;
 
     return 0;

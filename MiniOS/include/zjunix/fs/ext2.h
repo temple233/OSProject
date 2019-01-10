@@ -160,6 +160,7 @@ unsigned long fs_fflush_ext2();
 
 void fs_lseek_ext2(FILE_EXT2 *file, unsigned long new_loc);
 
+// usr.c
 unsigned long fs_create_ext2(unsigned char *filename);
 
 unsigned long fs_mkdir_ext2(unsigned char *filename);
@@ -168,7 +169,9 @@ unsigned long fs_rm_ext2(unsigned char *filename);
 
 unsigned long fs_mv_ext2(unsigned char *src, unsigned char *dest);
 
-unsigned long fs_cat_ext2(unsigned char * path);
+unsigned long fs_cat_ext2(unsigned char *path);
+
+unsigned long fs_dump_ext2();
 
 // ext2_utisl.c
 u32 get_entry_filesize_ext2(u8 *entry);

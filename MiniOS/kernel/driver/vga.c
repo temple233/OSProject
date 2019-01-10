@@ -177,7 +177,8 @@ exit:
     return cnt;
 }
 
-int kernel_printf(const char *format, ...) {
+int kernel_printf(const char *format, ...)
+{
     int cnt = 0;
     va_list ap;
     va_start(ap, format);

@@ -97,6 +97,40 @@ init_fs_err:
 }
 
 
+unsigned long fs_dump_ext2()
+{
+	kernel_printf("inode_num = %d\n", ext2_sb->inode_num);
+	kernel_printf("block_num = %d\n", ext2_sb->block_num);
+	kernel_printf("res_block_num = %d\n", ext2_sb->res_block_num);
+	kernel_printf("free_block_num = %d\n", ext2_sb->free_block_num);
+	kernel_printf("free_inode_num = %d\n", ext2_sb->free_inode_num);
+	kernel_printf("first_data_block_no = %d\n", ext2_sb->first_data_block_no);
+	kernel_printf("block_size = %d\n", ext2_sb->block_size);
+	kernel_printf("slice_size = %d\n", ext2_sb->slice_size);
+	kernel_printf("blocks_per_group = %d\n", ext2_sb->blocks_per_group);
+	kernel_printf("slices_per_group = %d\n", ext2_sb->slices_per_group);
+	kernel_printf("inodes_per_group = %d\n", ext2_sb->inodes_per_group);
+	kernel_printf("install_time = %d\n", ext2_sb->install_time);
+	kernel_printf("last_write_in = %d\n", ext2_sb->last_write_in);
+	kernel_printf("install_count = %d\n", ext2_sb->install_count);
+	kernel_printf("max_install_count = %d\n", ext2_sb->max_install_count);
+	kernel_printf("magic = %d\n", ext2_sb->magic);
+	kernel_printf("state = %d\n", ext2_sb->state);
+	kernel_printf("err_action = %d\n", ext2_sb->err_action);
+	kernel_printf("edition_change_mark = %d\n", ext2_sb->edition_change_mark);
+	kernel_printf("last_check = %d\n", ext2_sb->last_check);
+	kernel_printf("max_check_interval = %d\n", ext2_sb->max_check_interval);
+	kernel_printf("operating_system = %d\n", ext2_sb->operating_system);
+	kernel_printf("edition_mark = %d\n", ext2_sb->edition_mark);
+	kernel_printf("uid = %d\n", ext2_sb->uid);
+	kernel_printf("gid = %d\n", ext2_sb->gid);
+	kernel_printf("first_inode = %d\n", ext2_sb->first_inode);
+	kernel_printf("inode_size = %d\n", ext2_sb->inode_size);
+
+	// success
+	return 0;
+}
+
 unsigned long fs_find_ext2(FILE_EXT2 *file)
 {
 

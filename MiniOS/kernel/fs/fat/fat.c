@@ -21,7 +21,7 @@ static u8 new_alloc_empty[PAGE_SIZE];
 
 /**
  * .data
- * .dss
+ * .bss
  * That's OK!
  */
 
@@ -48,14 +48,14 @@ static inline u32 init_fat_info() {
     if (read_block(meta_buf, 0, 1) == 1) {
         goto init_fat_info_err;
     }
-    log(LOG_OK, "Get MBR sector info");
+    // log(LOG_OK, "Get MBR sector info");
     /* MBR partition 1 entry starts fromfat +446, and LBA starts from +8 */
     fat_info.base_addr = get_u32(meta_buf + 446 + 8);
 
     /* Get FAT BPB */
     if (read_block(fat_info.BPB.data, fat_info.base_addr, 1) == 1)
         goto init_fat_info_err;
-    log(LOG_OK, "Get FAT BPB");
+    // log(LOG_OK, "Get FAT BPB");
 #ifdef FS_DEBUG
     dump_bpb_info(&(fat_info.BPB.attr));
 #endif

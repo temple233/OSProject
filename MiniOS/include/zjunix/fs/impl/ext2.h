@@ -1,7 +1,7 @@
 #ifndef _ZJUNIX_VFS_EXT_2_H
 #define _ZJUNIX_VFS_EXT_2_H
 
-#include <zjunix/vfs/vfs.h>
+#include <zjunix/fs/impl/impl.h>
 
 #define                 EXT2_BOOT_BLOCK_SECT                2
 #define                 EXT2_SUPER_BLOCK_SECT               2
@@ -16,25 +16,27 @@
 #define                 EXT2_BLOCK_ADDR_SHIFT               2
 #define                 MAX_DIRENT_NUM                      128
 
-/**
- * ext2 meta information
- */
+// 文件类型
+enum {
+         EXT2_FT_UNKNOWN,     
+         EXT2_FT_REG_FILE,
+         EXT2_FT_DIR,   
+};
+
+// EXT2 文件系统信息汇总
 struct ext2_base_information {
-    u32 ex_base;                            // base sector ID
-    u32 ex_first_sb_sect;                   // super block in block group 0
-    u32 ex_first_gdt_sect;                  // GBT in group 0
+    u32                 ex_base;                            // 启动块的基地址（绝对扇区地址，下同）
+    u32                 ex_first_sb_sect;                   // 第一个super_block的基地址
+    u32                 ex_first_gdt_sect;                  // 第一个组描述符表的基地址
     union {
-        u8 *data;
+        u8                  *data;
         struct ext2_super   *attr;
-    } sb;                                   // data    
+    } sb;                                                   // 超级块数据    
 };
         
-/**
- * ext2 super block
- * in disk
- */
+// EXT2 文件系统内部超级块
 struct ext2_super {
-    u32 inode_num;                          // inode数
+    u32                 inode_num;                          // inode数
     u32                 block_num;                          // 块数
     u32                 res_block_num;                      // 保留块数
     u32                 free_block_num;                     // 空闲块数
@@ -111,8 +113,8 @@ struct ext2_inode {
 u32 init_ext2(u32);
 u32 ext2_delete_inode(struct dentry *);
 u32 ext2_write_inode(struct inode *, struct dentry *);
-struct dentry * ext2_inode_lookup(struct inode *, struct dentry *, struct file_find_helper *ffh);
-u32 ext2_create(struct inode *, struct dentry *, u32, struct file_find_helper *ffh);
+struct dentry * ext2_inode_lookup(struct inode *, struct dentry *, struct nameidata *);
+u32 ext2_create(struct inode *, struct dentry *, u32, struct nameidata *);
 u32 ext2_readdir(struct file *, struct getdent *);
 u32 ext2_readpage(struct vfs_page *);
 u32 ext2_writepage(struct vfs_page *);
@@ -120,6 +122,6 @@ u32 ext2_bmap(struct inode *, u32);
 u32 ext2_fill_inode(struct inode *);
 u32 ext2_check_inode_bitmap(struct inode *);
 u32 ext2_group_base_sect(struct inode *);
-u32 ext2_inode_find_from_ram_to_disk(struct inode *inode, u32 *inode_sector_id, u32 *inode_sector_offset);
+
 
 #endif

@@ -1,5 +1,5 @@
-#include <zjunix/vfs/vfs.h>
-#include <zjunix/vfs/vfscache.h>
+#include <zjunix/fs/impl/impl.h>
+#include <zjunix/fs/impl/implcache.h>
 
 #include <zjunix/slab.h>
 #include <zjunix/utils.h>
@@ -55,7 +55,7 @@ u32 generic_file_read(struct file *file, u8 *buf, u32 count, u32 *ppos){
     struct address_space *mapping;
    
     inode = file->f_dentry->d_inode;
-    mapping = &(inode->i_addr);
+    mapping = &(inode->i_data);
 
     // 计算其实页号、页偏移
     pos = *ppos;
@@ -154,7 +154,7 @@ u32 generic_file_write(struct file *file, u8 *buf, u32 count, u32 *ppos){
     struct address_space *mapping;
    
     inode = file->f_dentry->d_inode;
-    mapping = &(inode->i_addr);
+    mapping = &(inode->i_data);
 
     // 计算其实页号、页偏移
     pos = *ppos;
@@ -247,7 +247,7 @@ u32 generic_file_flush(struct file * file){
     struct address_space *mapping;
         
     inode = file->f_dentry->d_inode;
-    mapping = &(inode->i_addr);
+    mapping = &(inode->i_data);
     begin = &(mapping->a_cache);
     a = begin->next;
 

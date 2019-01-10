@@ -1,4 +1,4 @@
-#include <zjunix/vfs/vfs.h>
+#include <zjunix/fs/impl/impl.h>
 #include <zjunix/utils.h>
 #include <driver/sd.h>
 #include <zjunix/log.h>

@@ -1,12 +1,22 @@
 #include <driver/vga.h>
 #include <zjunix/log.h>
 #include <zjunix/slab.h>
+#include <zjunix/utils.h>
 #include "fat.h"
 
 u8 mk_dir_buf[32];
 FILE file_create;
 
 extern u8 cwd_name_fat[64];
+
+
+static inline unsigned int strlen(unsigned char *str)
+{
+    unsigned int len = 0;
+    while (str[len])
+        ++len;
+    return len;
+}
 
 /* remove directory entry */
 u32 fs_rm_fat(u8 *filename)
@@ -152,9 +162,18 @@ u32 fs_cat_fat(u8 *path)
     u8 filename[12];
     FILE cat_file;
 
+    u8 tempbuf[64];
+
+    if(path[0] != '/') {
+        kernel_strcpy(tempbuf, cwd_name_fat);
+        // .
+        // ..
+        // can not handle
+        kernel_strcpy(tempbuf + strlen(tempbuf), path);
+    }
     /* Open */
-    if (0 != fs_open_fat(&cat_file, path)) {
-        log(LOG_FAIL, "File %s open failed", path);
+    if (0 != fs_open_fat(&cat_file, tempbuf)) {
+        log(LOG_FAIL, "File %s open failed", tempbuf);
         return 1;
     }
 
@@ -165,7 +184,7 @@ u32 fs_cat_fat(u8 *path)
     buf[file_size] = 0;
     kernel_printf("%s\n", buf);
     fs_close_fat(&cat_file);
-    kfree(buf);
+    // kfree(buf);
     return 0;
 
 }
@@ -194,14 +213,6 @@ char *cut_front_blank(char *str)
     return str;
 }
 
-static inline unsigned int strlen(unsigned char *str)
-{
-    unsigned int len = 0;
-    while (str[len])
-        ++len;
-    return len;
-}
-
 static inline unsigned int each_param(char *para, char *word, unsigned int off, char ch)
 {
     int index = 0;
@@ -220,7 +231,12 @@ static inline unsigned int each_param(char *para, char *word, unsigned int off, 
 u32 fs_ls_fat(u8 *para)
 {
     struct dir_entry_attr entry;
-    char name[32];
+    char entry_name[64];
+    kernel_memset(entry_name, 0, 64);
+
+    char dir_name[64];
+    kernel_memset(dir_name, 0, 64);
+    
     char *p = para;
     // unsigned int next;
     unsigned int r;
@@ -231,8 +247,22 @@ u32 fs_ls_fat(u8 *para)
     p_len = strlen(p);
     // next = each_param(p, cwd_name_fat, 0, ' ');
 
-    if (fs_open_dir_fat(&dir, cwd_name_fat)) {
-        kernel_printf("open dir(%s) failed : No such directory!\n", cwd_name_fat);
+    if(strlen(para) > 0 && para[0] != '/') {
+        kernel_strcpy(dir_name, cwd_name_fat);
+        kernel_strcpy(dir_name + strlen(dir_name), para);
+        u32 len = strlen(dir_name);
+        if(dir_name[len - 1] != '/') {
+            dir_name[len] = '/';
+            dir_name[len + 1] = '\000';
+        }
+    } else if(strlen(para) > 0) {
+        kernel_strcpy(dir_name, para);
+    } else {
+        kernel_strcpy(dir_name, cwd_name_fat);
+    }
+
+    if (fs_open_dir_fat(&dir, dir_name)) {
+        kernel_printf("open dir(%s) failed : No such directory!\n", dir_name);
         return 1;
     }
 
@@ -242,11 +272,11 @@ readdir:
         if (-1 == r) {
             kernel_printf("\n");
         } else {
-            get_filename((unsigned char *)&entry, name);
+            get_filename((unsigned char *)&entry, entry_name);
             if (entry.attr == 0x10)  // sub dir
-                kernel_printf("%s/", name);
+                kernel_printf("%s/", entry_name);
             else
-                kernel_printf("%s", name);
+                kernel_printf("%s", entry_name);
             kernel_printf("\n");
             goto readdir;
         }
@@ -256,12 +286,62 @@ readdir:
     return 0;
 }
 
+/**
+ * cd ../
+ * backward parent directory
+ */
+static inline void backward(u8 *parentOut)
+{
+    kernel_memset(parentOut, 0, 64);
+    kernel_strcpy(parentOut, cwd_name_fat);
+
+    u32 len = strlen(parentOut);
+
+    // len > 1
+    if(len <= 1) return;
+
+    for(u32 i = len - 2; i >= 0; i--) {
+        if(parentOut[i] == '/') {
+            parentOut[i] = '\000';
+            break;
+        }
+        parentOut[i] = '\000';
+    }
+    
+}
+
 u32 fs_cd_fat(u8 *dirName)
 {
     u32 len = strlen(cwd_name_fat);
-    for(int i = 0; i < strlen(dirName); i++) {
-        cwd_name_fat[len + i] = dirName[i];
+    u32 dirNameLen = strlen(dirName);
+
+    u8 tempbuf[128];
+    if(dirName[0] == '.') {
+        if(dirNameLen > 1 && dirName[1] == '.') {
+            u8 parentOut[64];
+            backward(parentOut);
+            kernel_strcpy(tempbuf, parentOut);
+            kernel_strcpy(tempbuf + strlen(parentOut), dirName + 3);
+            kernel_strcpy(cwd_name_fat, tempbuf);
+        } else {
+            kernel_strcpy(tempbuf, cwd_name_fat);
+            kernel_strcpy(tempbuf + strlen(tempbuf), dirName + 2);
+            kernel_strcpy(cwd_name_fat, tempbuf);
+        }
+    } else if(dirName[0] != '/'){
+        int i;
+        for(i = 0; i < strlen(dirName); i++) {
+            cwd_name_fat[len + i] = dirName[i];
+        }
+        cwd_name_fat[len + i] = '\000';
     }
+    // puts(cwd_name_fat);
+    if(cwd_name_fat[strlen(cwd_name_fat) - 1] != '/') {
+        u32 len = strlen(cwd_name_fat);
+        cwd_name_fat[len] = '/';
+        cwd_name_fat[len + 1] = '\000';
+    }
+    
     // success
     return 0;
 }
