@@ -29,7 +29,7 @@ u32 fs_rm_fat(u8 *filename)
         goto fs_rm_err;
 
     /* Mark 0xE5 */
-    mk_dir.entry.data[0] = 0xe5;
+    mk_dir.entry.data[0] = 0xE5;
 
     /* Release all allocated block */
     clus = get_start_cluster(&mk_dir);
@@ -86,7 +86,7 @@ u32 fs_mv_fat(u8 *src, u8 *dest)
         goto fs_mv_err;
 
     /* mark src directory entry 0xE5 */
-    mk_dir.entry.data[0] = 0xe5;
+    mk_dir.entry.data[0] = 0xE5;
 
     if (fs_close_fat(&mk_dir) == 1)
         goto fs_mv_err;
@@ -264,10 +264,6 @@ readdir:
             kernel_printf("\n");
         } else {
             get_filename((unsigned char *)&entry, entry_name);
-            u8 temp[7];
-            for(u32 i = 0ul; i < 6 && i < strlen(entry_name); i++) temp[i] = entry_name[i];
-            temp[6] = '\000';
-            if(!kernel_strcmp(temp, "SYSTEM")) goto readdir;
             if (entry.attr == 0x10)  // sub dir
                 kernel_printf("%s", entry_name);
             else

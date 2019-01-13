@@ -20,14 +20,18 @@ struct file* vfs_open(const u8 *filename, u32 flags, u32 mode){
     struct file         *f;
     struct nameidata    nd;
 
+    // kernel_puts("enter into vfs_open\n", VGA_WHITE, VGA_BLACK);
+
     // 重置flags，因为内外部定义有些地方不一致
     namei_flags = flags;                                 
     if ( (namei_flags + 1) & O_ACCMODE )
         namei_flags ++;
     
-    // 逐层解析路径，并把文件关联的dentry和vfsmount对象保存在nd结构中
+    /**
+     * parse path
+     */
     err = open_namei(filename, namei_flags, mode, &nd);
-
+    // kernel_puts("after open_namei in open\n", VGA_WHITE, VGA_BLACK);
     // 用得到的nd结构初始化file对象，并返回
     if (!err)
         return dentry_open(nd.dentry, nd.mnt, flags);
@@ -50,8 +54,8 @@ u32 open_namei(const u8 *pathname, u32 flag, u32 mode, struct nameidata *nd){
     nd->intent.open.flags = flag;       // TOKNOW
     nd->intent.open.create_mode = mode;
 
-    // 没有指定新建，只需要查找，然后直接返回
-    // 在nd结构中，dentry和mnt字段将会指向原路径名最后一个所解析分量指向的对象
+    // kernel_puts("enter into open_namei\n", VGA_WHITE, VGA_BLACK);
+
     if (!(flag & O_CREAT)) {
         err = path_lookup(pathname, LOOKUP_FOLLOW, nd);
         if (err)
@@ -63,10 +67,6 @@ u32 open_namei(const u8 *pathname, u32 flag, u32 mode, struct nameidata *nd){
     if ( err = path_lookup(pathname, LOOKUP_PARENT|LOOKUP_CREATE, nd) )
         return err;
     
-    // 现在nd里面有最后一个分量的目录对应的mnt和dentry对象，还有最后一个分量的信息
-    // 但是所要创建的文件（即这个分量）是否已经存在，现在是不知道的
-
-    // 不是普通的文件，不认为可以创建
 	err = -EISDIR;
 	if (nd->last_type != LAST_NORM || nd->last.name[nd->last.len])
 		goto exit;
@@ -85,6 +85,7 @@ do_last:
     // 接下来需要新建一个inode，并且与这个dentry建立联系
 	if (!dentry->d_inode) {
         err = dir->d_inode->i_op->create(dir->d_inode, dentry, mode, nd);
+
         dput(nd->dentry);
 		nd->dentry = dentry;
 		if (err)
@@ -111,7 +112,9 @@ exit:
 
 }
 
-// 根据父目录和名字查找对应的目录项（创建模式会调用）
+/**
+ * 
+ */
 struct dentry * __lookup_hash(struct qstr *name, struct dentry *base, struct nameidata *nd) {
     u32 err;
 	struct dentry   *dentry;
@@ -450,6 +453,7 @@ struct file * dentry_open(struct dentry *dentry, struct vfsmount *mnt, u32 flags
 	error = -ENFILE;
 	f = (struct file* ) kmalloc ( sizeof(struct file) );
     INIT_LIST_HEAD(&f->f_list);
+
 	if (!f)
         goto cleanup_dentry;
     
@@ -459,6 +463,9 @@ struct file * dentry_open(struct dentry *dentry, struct vfsmount *mnt, u32 flags
 	f->f_flags      = flags;
 	f->f_mode       = ((flags+1) & O_ACCMODE) | FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE ;
 	f->f_mapping    = &(inode->i_data);
+
+    // kernel_puts("after inode deference in dentry_open\n", VGA_WHITE, VGA_BLACK);
+
 	f->f_dentry     = dentry;
 	f->f_vfsmnt     = mnt;
 	f->f_pos        = 0;

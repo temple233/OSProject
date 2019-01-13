@@ -283,6 +283,30 @@ unsigned long fs_open_ext2(FILE_EXT2 *file, unsigned char *filename)
 fs_open_err:
     return 1;
 }
+/* fflush, write global buffers to sd */
+u32 fs_fflush_fat() {
+    u32 i;
+
+    // FSInfo shoud add base_addr
+    if (write_block(fat_info.fat_fs_info, 1 + fat_info.base_addr, 1) == 1)
+        goto fs_fflush_err;
+
+    if (write_block(fat_info.fat_fs_info, 7 + fat_info.base_addr, 1) == 1)
+        goto fs_fflush_err;
+
+    for (i = 0; i < FAT_BUF_NUM; i++)
+        if (write_fat_sector(i) == 1)
+            goto fs_fflush_err;
+
+    for (i = 0; i < DIR_DATA_BUF_NUM; i++)
+        if (fs_write_512(dir_data_buf + i) == 1)
+            goto fs_fflush_err;
+
+    return 0;
+
+fs_fflush_err:
+    return 1;
+}
 
 unsigned long fs_close_ext2(FILE_EXT2 *file)
 {
@@ -500,7 +524,6 @@ fs_write_err:
     return 0xFFFFFFFF;
 }
 
-/* fflush, write global buffers to sd */
 unsigned long fs_fflush_ext2()
 {
     u32 i;

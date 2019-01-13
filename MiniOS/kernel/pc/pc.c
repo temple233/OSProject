@@ -7,20 +7,20 @@
 #include <zjunix/slab.h>
 #include <driver/vga.h>
 #include <driver/ps2.h>
-#include <zjunix/vfs/vfs.h>
+#include <zjunix/fs/impl/impl.h>
 #include <page.h>
 
 //等待进程链表，用于存放处于等待状态的进程
 struct list_head wait;
-//结束进程链表，用于存放处于结束状态的进程，在进程调度函数pc_schedule中清空
-struct list_head exited;
+//结束进程链表，用于存放处于结束状态的进程，在进程调度函数schedule中清空
+struct list_head process_exit;
 //进程链表，存放所有进程
-struct list_head tasks;
+struct list_head process;
 
 //调度链表，在多级反馈队列上进行部分修改
 struct list_head sched;     //前台队列, 有init、idle进程， RR调度算法
-struct list_head sched_back[SCHED_LV_RANGE + 1]; //多级反馈队列，除最后一级使用FIFO，其余均使用RR
-unsigned int sched_time_cnt[SCHED_LV_RANGE + 1]; //多级队列所具有的时间片数量
+struct list_head sched_back; //多级反馈队列，除最后一级使用FIFO，其余均使用RR
+unsigned int sched_time_cnt; //多级队列所具有的时间片数量
 struct task_struct *current_task = 0;            //当前进程全局指针
 
 //无用变量
@@ -48,7 +48,7 @@ void waitpid(pid_t pid) {
 
     //检查要等待的进程是否已经退出
     is_exited = 1;
-    list_for_each(pos, &tasks) {
+    list_for_each(pos, &process) {
         next = container_of(pos, struct task_struct, node);
         if (next->pid == pid_val && next->state != S_TERMINAL) {
             is_exited = 0;
@@ -121,11 +121,11 @@ void wakeup_parent() {
     //如果父进程在等待当前进程，则将父进程放入调度链表，并将父进程状态设为S_READY状态
     if (is_found) {
        remove_sched(next);
-       if (next->sched_lv == SCHED_LV0) {
+       if (next->BG_FG == FOREGROUND) {
            add_sched(next);
        }
        else {
-           list_add(&(next->sched), &sched_back[next->sched_lv]); //链表首部
+           list_add(&(next->sched), &sched_back); //链表首部
        }
        next->state = S_READY;
     }
@@ -137,13 +137,13 @@ void add_wait(struct task_struct *task) {
 }
 
 //将进程放入结束链表
-void add_exited(struct task_struct *task) {
-    list_add_tail(&(task->sched), &exited);
+void add_exit(struct task_struct *task) {
+    list_add_tail(&(task->sched), &process_exit);
 }
 
 //将进程放入进程链表
 void add_task(struct task_struct *task) {
-    list_add_tail(&(task->node), &tasks);
+    list_add_tail(&(task->node), &process);
 }
 
 //将进程放入前台调度链表
@@ -151,13 +151,9 @@ void add_sched(struct task_struct *task) {
     list_add_tail(&(task->sched), &sched);
 }
 
-//将进程放入后台调度链表，index表示是第几级链表
-void add_sched_back(struct task_struct *task, int index) {
-    if (index > SCHED_LV_RANGE || index < 0) {
-        kernel_printf("add_sched_back: index out of range!\n");
-        return ;
-    }
-    list_add_tail(&(task->sched), &sched_back[index]);
+//将进程放入后台调度链表 
+void add_sched_back(struct task_struct *task) {
+    list_add_tail(&(task->sched), &sched_back);
 }
 
 //从进程链表中移除进程
@@ -182,11 +178,11 @@ void remove_sched(struct task_struct *task) {
 //根据进程号在进程链表中查找进程
 //如果找到，则返回进程的task_struct结构
 //否则返回0
-struct task_struct* find_in_tasks(pid_t pid) {
+struct task_struct* find_in_process(pid_t pid) {
     struct task_struct *next;
     struct list_head *pos;
 
-    list_for_each(pos, &tasks) {
+    list_for_each(pos, &process) {
         next = container_of(pos, struct task_struct, node);
         if (next->pid == pid)
             goto Found;
@@ -213,13 +209,11 @@ struct task_struct* find_in_sched(pid_t pid) {
     } 
 
     //遍历后台多级链表
-    for (i = 1; i <= SCHED_LV_RANGE; i++) {
-        list_for_each(pos, &sched_back[i]) {
+        list_for_each(pos, &sched_back) {
             next = container_of(pos, struct task_struct, sched);
             if (next->pid == pid)
                 goto Found;
         }
-    }
   
     return 0;   
 Found:
@@ -228,10 +222,6 @@ Found:
 
 void task_files_delete(struct task_struct* task) {
     //可能有问题，不知道如何查看文件是否打开
-    /**
-     * 当然没问题了
-     * 文件打开了, 就关闭就好了
-     */
     fs_close_fat(task->task_files);
     kfree(&(task->task_files));
 }
@@ -277,15 +267,13 @@ static void copy_context(context* src, context* dest) {
 void init_pc_list() {
     int i;
     INIT_LIST_HEAD(&wait);    //等待链表
-    INIT_LIST_HEAD(&tasks);   //进程链表
+    INIT_LIST_HEAD(&process);   //进程链表
     INIT_LIST_HEAD(&sched);   //前台调度链表
-    INIT_LIST_HEAD(&exited);  //结束链表
+    INIT_LIST_HEAD(&process_exit);  //结束链表
 
     //后台多级调度链表
-    for (i = 0; i <= SCHED_LV_RANGE; i++) {
-        INIT_LIST_HEAD(&sched_back[i]);
-        sched_time_cnt[i] = CNT_BASE * i;  //根据调度链表的级数(i)来赋予调度链表的用于调度的时间片
-    }
+        INIT_LIST_HEAD(&sched_back);
+        sched_time_cnt = CNT_BASE * i;  //根据调度链表的级数(i)来赋予调度链表的用于调度的时间片
 
 }
 
@@ -310,8 +298,8 @@ void init_pc() {
     idle->mm = 0;
     idle->task_files = 0;
     idle->time_cnt = CNT_LV0;
-    idle->sched_lv = SCHED_LV0;
-
+    idle->BG_FG = FOREGROUND;
+    idle->priority=5;
     INIT_LIST_HEAD(&(idle->sched));
     INIT_LIST_HEAD(&(idle->node));
     add_task(idle);      //加入进程链表
@@ -321,7 +309,7 @@ void init_pc() {
     current_task = idle;
 
     //注册进程调度函数，时钟中断触发
-    register_interrupt_handler(7, pc_schedule);
+    register_interrupt_handler(7, schedule);
     //设置cp0中的compare和count寄存器
     //当compare == count时，产生时钟中断（7号）
     asm volatile(
@@ -334,12 +322,12 @@ void init_pc() {
 //用命令创建进程
 //新建进程的入口函数是公共的
 //返回0表示执行成功，否则表示执行失败
-int exec_from_kernel(unsigned int argc, void *args, int is_wait, int is_user) {
+int exec_from_kernel(unsigned int argc, void *args, int wait_process, int user_process) {
     int res; 
     pid_t new_pid;
     int status;
 
-    if (is_user)
+    if (user_process)
         //内核线程，新创建进程的入口为vmprog函数
         res = task_create(args, (void*)vmprog, argc, args, &new_pid, 1);
     else
@@ -352,7 +340,7 @@ int exec_from_kernel(unsigned int argc, void *args, int is_wait, int is_user) {
     }
 
     //是否等待子进程
-    if (is_wait) {
+    if (wait_process) {
         waitpid(new_pid);
         //如果当前进程等待子进程，则在其被唤醒之后将从这里开始执行  
     }
@@ -366,18 +354,12 @@ int exec_from_kernel(unsigned int argc, void *args, int is_wait, int is_user) {
 //args指向真正的内核线程执行函数
 //此处为了测试进程创建，让其输出测试提示信息
 int runprog(unsigned int argc, void *args) {
-    int count1, count2;
-
-
-    kernel_printf("\n********This is runprog!*********\n");
-    kernel_printf("current_task: %d\n", current_task->pid);
-    kernel_printf("**********runprog end************\n");
-
-     //用于等待子进程测试进程loop的创建
-    if (kernel_strcmp(args, "loop") == 0) {
-        while (1)
-            ;
-    }
+    int count1,count2;
+    //  //用于等待子进程测试进程loop的创建
+    // if (kernel_strcmp(args, "loop") == 0) {
+    //     while (1)
+    //         ;
+    // }
 
 
     //循环计数使得新创建进程每个一定的计数次数输出提示信息，表明进程被调度
@@ -385,18 +367,15 @@ int runprog(unsigned int argc, void *args) {
     count2 = 0;
     while(1) {
         count1 ++;
-        if (count2 == 3)
+        if (count2 == 5)
             break;
         if (count1== 10000000) {
-//            kernel_printf("********This is runprog!*********\n");
-            kernel_printf("\ncurrent_task: %d \n", current_task->pid);
-//            kernel_printf("**********runprog end************\n");
             count1 = 0;
             count2 ++;
         }
     }
     //进程将要结束的提示信息
-    kernel_printf("\ncurrent_task: %d  End.......\n", current_task->pid);
+    kernel_printf("\nprocess %d  finish \n", current_task->pid);
 
     //进程退出
     pc_exit(0);
@@ -412,10 +391,10 @@ int runprog(unsigned int argc, void *args) {
 //entry: 进程的入口函数
 //args: 进程的参数信息
 //retpid: 用于返回新创建进程的pid
-//is_user: 是否是创建用户进程
+//user_process: 是否是创建用户进程
 //创建成功返回0, 否则返回1
 int task_create(char *task_name, void(*entry)(unsigned int argc, void *args), 
-                unsigned int argc, void *args, pid_t *retpid, int is_user)              {
+                unsigned int argc, void *args, pid_t *retpid, int user_process)              {
                 
     pid_t newpid;            
     union task_union *new;
@@ -442,6 +421,8 @@ int task_create(char *task_name, void(*entry)(unsigned int argc, void *args),
     new->task.ASID = new->task.pid;
     new->task.parent = cur->pid;
     new->task.state = S_UNINIT;
+    new->task.priority=5;
+    new->task.test=0;
     kernel_strcpy(new->task.name, task_name);
 
     INIT_LIST_HEAD(&(new->task.node));
@@ -451,7 +432,7 @@ int task_create(char *task_name, void(*entry)(unsigned int argc, void *args),
     new->task.task_files = 0;
 
     /*mm_struct*/
-    if (is_user)
+    if (user_process)
         //用户进程需要为其分配地址空间结构
         new->task.mm = mm_create();
     else
@@ -479,15 +460,15 @@ int task_create(char *task_name, void(*entry)(unsigned int argc, void *args),
     if (new->task.pid == INIT_PID) {
         //前台调度链表
         new->task.time_cnt = CNT_LV0;
-        new->task.sched_lv = SCHED_LV0;
+        new->task.BG_FG = FOREGROUND;
         add_sched(&(new->task));
     }
     else {
-        //后台调度链表，默认放入一级队列
-        new->task.sched_lv = SCHED_LV_MIN;
-        new->task.time_cnt = sched_time_cnt[new->task.sched_lv];
+        //后台调度链表
+        new->task.BG_FG = BACKGROUND;
+        new->task.time_cnt = sched_time_cnt;
       //  add_sched_1(&(new->task));
-        add_sched_back(&(new->task), new->task.sched_lv);
+        add_sched_back(&(new->task));
     }
     new->task.state = S_READY;
     #ifdef VMA_DEBUG
@@ -535,7 +516,7 @@ int pc_kill(pid_t pid) {
     }
 
     // 通过pid获取要被杀死的的进程的task_struct结构
-    task = find_in_tasks(pid);
+    task = find_in_process(pid);
     
 #ifdef  PC_DEBUG
     sched_node = find_in_sched(pid);
@@ -550,7 +531,7 @@ int pc_kill(pid_t pid) {
 
     task->state = S_TERMINAL;
     remove_sched(task);
-    add_exited(task);
+    add_exit(task);
 
     if (task->task_files != 0) {
         task_files_delete(task);
@@ -579,7 +560,7 @@ error_0:
 }
 
 //清理结束链表
-//在每次进行进程调度pc_schedule()时调用此函数
+//在每次进行进程调度schedule()时调用此函数
 void clear_exited() {
     struct task_struct* next;
     
@@ -588,11 +569,11 @@ void clear_exited() {
     #endif
     
     //始终删除exited链表的第一个节点，直至exited为空
-    while (exited.next != &exited) {
-        next = container_of(exited.next, struct task_struct, sched);
+    while (process_exit.next != &process_exit) {
+        next = container_of(process_exit.next, struct task_struct, sched);
         
         if (next->state != S_TERMINAL) {
-            kernel_printf("There is task_struct in exited list with state != TERMINAL.--%s", next->name);
+            kernel_printf("There is task_struct in process_exit list with state != TERMINAL.--%s", next->name);
             goto error_0;        
         }
 
@@ -601,7 +582,7 @@ void clear_exited() {
         remove_task(next);
         
         #ifdef  PC_DEBUG
-        kernel_printf("clear exited: count = %d\n", ++count);
+        kernel_printf("clear process_exit: count = %d\n", ++count);
         #endif
 
     }
@@ -661,7 +642,7 @@ void pc_exit(int state) {
     }
 
     remove_sched(cur);
-    add_exited(cur);
+    add_exit(cur);
     pid_free(cur->pid);
     current_task = next;
 
@@ -678,7 +659,7 @@ error_0:
 
 //进程调度函数，由时钟中断触发
 //参数pt_context指向当前进程的上下文信息
-void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
+void schedule(unsigned int status, unsigned int cause, context* pt_context) {
     struct task_struct *next;
     struct list_head *pos;
 
@@ -701,7 +682,7 @@ void pc_schedule(unsigned int status, unsigned int cause, context* pt_context) {
     }
     else {
         //进到此处并不总是意味着是bug,如果只有idle进程，那么必须进入这里，否则就是bug
-        kernel_printf("pc_schedule: next == current_task\n");
+        kernel_printf("schedule: next == current_task\n");
         while(1)
             ;
     }
@@ -718,26 +699,19 @@ struct task_struct* find_next_task() {
 
     is_back = 0;
     next = (struct task_struct*)0;
-    if (current_task->sched_lv == SCHED_LV0)    //当前在前台调度链表中的调度
+    if (current_task->BG_FG == FOREGROUND)    //当前在前台调度链表中的调度
         if (current_task->sched.next == &sched)    //下一个进程指向sched链表的头部，表明要进入后台调度
             is_back = 1;
         else 
             next = container_of(current_task->sched.next, struct task_struct, sched);
     else {
-        if (current_task->sched_lv < SCHED_LV_MAX) {
-            current_task->time_cnt --;
+            current_task->time_cnt--;
             remove_sched(current_task);
-
             if (current_task->time_cnt == 0) {
-                //debug
-                kernel_printf("\npid %d drops from list %d\n",current_task->pid, current_task->sched_lv);
-                //debug
-                current_task->sched_lv ++;
-                current_task->time_cnt = sched_time_cnt[current_task->sched_lv];
+                current_task->time_cnt = sched_time_cnt;
             }
 
-            add_sched_back(current_task, current_task->sched_lv);
-        }
+            add_sched_back(current_task);
         next = container_of(sched.next, struct task_struct, sched);
     }
 
@@ -751,21 +725,75 @@ struct task_struct* find_next_task() {
 
 //遍历后台多级反馈队列，查找下一个要执行的进程
 struct task_struct* find_in_sched_back() {
-    int i;
+    int i=0;
+    int t;
     struct list_head *pos;
     struct task_struct *next;
+    int max_priority=-1;
+    struct task_struct *temp;
+    list_for_each(pos, &sched_back) {
+        next = container_of(pos, struct task_struct, sched);
+        next->priority=next->priority+2;
 
-    for (i = 1; i <= SCHED_LV_RANGE; i++) {
-        //遍历第i级后台队列链表
-        list_for_each(pos, &sched_back[i]) {
-            next = container_of(pos, struct task_struct, sched);
-            if (next->state == S_READY)
-                goto Found;
+    }
+    //遍历第i级后台队列链表
+    list_for_each(pos, &sched_back) {
+        i++;
+        next = container_of(pos, struct task_struct, sched);
+        if (next->state == S_READY){
+            if(next->priority<=max_priority)
+                continue;
+            else{
+                max_priority=next->priority;
+                temp=next;
+                t=i;
+            }
+            
         }
     }
+if(max_priority<0)
     return 0;
-Found:
-    return next;
+else{
+
+    int tempp=t;
+    int temppp=t;
+    int sign=0;
+    list_for_each(pos, &sched_back) {
+        tempp--;
+        next = container_of(pos, struct task_struct, sched);
+        if(next->priority>10){
+            sign=1;
+        }
+    }
+    list_for_each(pos, &sched_back) {
+        t--;
+        next = container_of(pos, struct task_struct, sched);
+        if(t==0){
+           //kernel_printf("max_priority task:%d  %d\n",next->pid ,next->priority );
+            next->priority=next->priority-3;
+            if(next->priority<0)next->priority=0;
+             //if(next->priority>0&&sign==0)print_struct_task(next);
+        //     struct task_struct *next0;
+        //     struct list_head *pos0;
+        // list_for_each(pos0, &sched_back) {
+        //     next0 = container_of(pos0, struct task_struct, sched);
+        //     print_struct_task(next0);
+        // }
+           // return temp;
+        }
+        
+    }
+    if(sign==0&&temp->priority!=0)
+   kernel_printf(" current task with max_priority:%d  %d\n",temp->pid ,temp->priority );
+    // if(sign==0){
+    //     list_for_each(pos, &sched_back) {
+    //     next = container_of(pos, struct task_struct, sched);
+    //     kernel_printf("task:%d  %d\n",next->pid ,next->priority );
+    // }
+    // }
+    
+    return temp;
+}
 }
 
 //输出调度链表信息
@@ -775,20 +803,19 @@ void print_sched() {
     int i;
 
     //输出前台调度链表
-    kernel_printf("sched list:\n");
+    kernel_printf("total list:\n");
     list_for_each(pos, &sched) {
         next = container_of(pos, struct task_struct, sched);
         print_struct_task(next);
     }
     
     //输出后台调度链表(多级反馈队列)
-    for (i = 1; i <= SCHED_LV_RANGE; i++) {
-        kernel_printf("sched_back_lv%d: \n", i);
-        list_for_each(pos, &sched_back[i]) {
+        kernel_printf("");
+        list_for_each(pos, &sched_back) {
             next = container_of(pos, struct task_struct, sched);
             print_struct_task(next);
         }
-    }
+
 }
 
 //输出进程链表信息
@@ -805,7 +832,7 @@ void print_task() {
 
     kernel_printf("task list:\n");
 
-    list_for_each(pos, &tasks) {
+    list_for_each(pos, &process) {
         next = container_of(pos, struct task_struct, node);
         print_struct_task(next);
     }    
@@ -817,9 +844,9 @@ void print_exited() {
     struct list_head *pos;
     int i;
     int count = 0;
-    kernel_printf("exited list:\n");
+    kernel_printf("process_exit list:\n");
 
-    list_for_each(pos, &exited) {
+    list_for_each(pos, &process_exit) {
         next = container_of(pos, struct task_struct, sched);
         print_struct_task(next);
     }        
@@ -827,15 +854,15 @@ void print_exited() {
 
 //输出进程控制块-task_struct结构
 void print_struct_task(struct task_struct* task) {
-    kernel_printf("name:%s \t pid:%d \t  parent:%d \t", task->name, task->pid, task->parent);
-    kernel_printf("state: %d\n", task->state);
+    kernel_printf(" name:%s \t  pid:%d \t  parent:%d \t \n", task->name, task->pid, task->parent);
+    kernel_printf(" state: %d  back:%d priority:%d\n", task->state,task->BG_FG,task->priority);
 } 
 
 //输出等待链表信息
 void print_wait() {
     struct task_struct* next;
     struct list_head* pos;
-    kernel_printf("wait list:\n");
+    kernel_printf(" wait list:\n");
     list_for_each(pos, &wait) {
         next = container_of(pos, struct task_struct, sched);
         print_struct_task(next);
@@ -905,260 +932,260 @@ int vmprog(unsigned int argc, void *args) {
 //加载外部用户程序，并以之替换为当前进程的执行内容
 //由于目前仍进行到部分测试阶段,故该功能并未整合到操作系统中,并且函数内代码略显混乱
 int runuserprog(char* progname) {
-//     // unsigned char buf[512];
-//     unsigned int entry, stackptr;
-//     unsigned int phy_entry;
-//     unsigned int stack_entry, heap_entry;
-//     int res, i;
-//     unsigned int size, npage, nbuf;
-//     struct mm_struct *newmm, *oldmm;
+    // unsigned char buf[512];
+    unsigned int entry, stackptr;
+    unsigned int phy_entry;
+    unsigned int stack_entry, heap_entry;
+    int res, i;
+    unsigned int size, npage, nbuf;
+    struct mm_struct *newmm, *oldmm;
 
-//     #ifdef TLB_DEBUG
-//         unsigned int* debug_addr;
-//         unsigned int debug_val;
-//     #endif
+    #ifdef TLB_DEBUG
+        unsigned int* debug_addr;
+        unsigned int debug_val;
+    #endif
     
 
-//     #ifdef VMA_DEBUG
-//     kernel_printf("runuser: pid %d\n", current_task->pid);
-//     #endif
-// //load user program
-//     // #ifdef TLB_DEBUG
-//     //     kernel_printf("progname: %s  %d\n", progname, sizeof(FILE));
-//     // #endif
-//     // current_task->task_files = kmalloc(sizeof(FILE));
+    #ifdef VMA_DEBUG
+    kernel_printf("runuser: pid %d\n", current_task->pid);
+    #endif
+//load user program
+    // #ifdef TLB_DEBUG
+    //     kernel_printf("progname: %s  %d\n", progname, sizeof(FILE));
+    // #endif
+    // current_task->task_files = kmalloc(sizeof(FILE));
 
-//     // if (current_task->task_files == 0) {
-//     //     kernel_printf("runuserprog: task files allocated failed!\n");
-//     //     goto error_0;
-//     // }
-//     // kernel_memset(current_task->task_files, 0, sizeof(FILE));
+    // if (current_task->task_files == 0) {
+    //     kernel_printf("runuserprog: task files allocated failed!\n");
+    //     goto error_0;
+    // }
+    // kernel_memset(current_task->task_files, 0, sizeof(FILE));
     
-//     // 调用VFS提供的打开接口
-//     struct file * file;
-//     file = vfs_open(progname, O_RDONLY, 0);
-//     if (IS_ERR_OR_NULL(file)){
-//         if ( PTR_ERR(file) == -ENOENT )
-//             kernel_printf("File not found!\n");
-//             return PTR_ERR(file);
-//     }
+    // 调用VFS提供的打开接口
+    struct file * file;
+    file = vfs_open(progname, O_RDONLY, 0);
+    if (IS_ERR_OR_NULL(file)){
+        if ( PTR_ERR(file) == -ENOENT )
+            kernel_printf("File not found!\n");
+            return PTR_ERR(file);
+    }
 
-//     // 接下来读取文件数据区的内容到buf
-//     int base = 0;
-//     int file_size = file->f_dentry->d_inode->i_size;
-//     u8 *buf = (u8*) kmalloc (file_size + 1);
-//     if ( vfs_read(file, buf, file_size, &base) != file_size )
-//         return 1;
-//     vfs_close(file);
-
-    
-//     // #ifdef VMA_DEBUG
-//     // kernel_printf("after read: %d  %s\n", current_task->pid, current_task->name);
-//     // #endif
-
-
-//     // res = fs_open(current_task->task_files, progname);
-//     // if (res != 0) {
-//     //     kernel_printf("runuserprog:File %s not exist\n", progname);
-//     //     goto error_1;
-//     // }
-
-//     //create mm
-//     newmm = mm_create();
-//     if (newmm == 0) {
-//         kernel_printf("runuserprog: mm_create create failed!\n");
-//         goto error_2;
-//     }
-//     //
-
-//     //load program
-//     // size = get_entry_filesize(current_task->task_files->entry.data);
-//     npage = file_size + (PAGE_SIZE - 1);
-//     npage >>= PAGE_SHIFT;
-//    phy_entry = (unsigned int) kmalloc(PAGE_SIZE * npage);
-    
-//    // phy_entry = (unsigned int) kmalloc();
-
-//     if (phy_entry == 0) {
-//         kernel_printf("runuserprog: phy_entry allocated failed!\n");
-//         goto error_3;
-//     }
-
+    // 接下来读取文件数据区的内容到buf
+    unsigned long int base = 0;
+    int file_size = file->f_dentry->d_inode->i_size;
+    u8 *buf = (u8*) kmalloc (file_size + 1);
+    if ( vfs_read(file, buf, file_size, &base) != file_size )
+        return 1;
+    vfs_close(file);
 
     
+    // #ifdef VMA_DEBUG
+    // kernel_printf("after read: %d  %s\n", current_task->pid, current_task->name);
+    // #endif
+
+
+    // res = fs_open(current_task->task_files, progname);
+    // if (res != 0) {
+    //     kernel_printf("runuserprog:File %s not exist\n", progname);
+    //     goto error_1;
+    // }
+
+    //create mm
+    newmm = mm_create();
+    if (newmm == 0) {
+        kernel_printf("runuserprog: mm_create create failed!\n");
+        goto error_2;
+    }
+    //
+
+    //load program
+    // size = get_entry_filesize(current_task->task_files->entry.data);
+    npage = file_size + (PAGE_SIZE - 1);
+    npage >>= PAGE_SHIFT;
+   phy_entry = (unsigned int) kmalloc(PAGE_SIZE * npage);
+    
+   // phy_entry = (unsigned int) kmalloc();
+
+    if (phy_entry == 0) {
+        kernel_printf("runuserprog: phy_entry allocated failed!\n");
+        goto error_3;
+    }
+
+
+    
 
 
 
-//     //分配堆和栈
-//     stack_entry = (unsigned int) kmalloc(PAGE_SIZE * 2);
-//     if (stack_entry == 0) {
-//         kernel_printf("runuserprog: stack allocated failed!\n");
-//         goto error_3;
-//     }
+    //分配堆和栈
+    stack_entry = (unsigned int) kmalloc(PAGE_SIZE * 2);
+    if (stack_entry == 0) {
+        kernel_printf("runuserprog: stack allocated failed!\n");
+        goto error_3;
+    }
 
-//     /*
-//     heap_entry = (unsigned int) kmalloc(PAGE_SIZE); //感觉这个暂时没用
-//     if (heap_entry == 0) {
-//         kernel_printf("runserprog: heap allocated failed!\n");
-//         goto error_4;
-//     }
-//     */
+    /*
+    heap_entry = (unsigned int) kmalloc(PAGE_SIZE); //感觉这个暂时没用
+    if (heap_entry == 0) {
+        kernel_printf("runserprog: heap allocated failed!\n");
+        goto error_4;
+    }
+    */
 
-//     res = do_mapping(newmm->pgd, USER_CODE_ENTRY, npage, phy_entry, 0x0f);
-//     if (res != 0) {
-//         kernel_printf("runuserprog:mapping for code segment failed!\n");
-//         goto error_5;
-//     }
+    res = do_mapping(newmm->pgd, USER_CODE_ENTRY, npage, phy_entry, 0x0f);
+    if (res != 0) {
+        kernel_printf("runuserprog:mapping for code segment failed!\n");
+        goto error_5;
+    }
 
-//     res = do_one_mapping(newmm->pgd, USER_STACK_ENTRY - PAGE_SIZE, stack_entry, 0x0f);
-//     if (res != 0) {
-//         kernel_printf("runuserprog:mapping for stack segment failed!\n");
-//         goto error_5;
-//     }
-//     // #ifdef VMA_DEBUG
-//     // kernel_printf("Map stack done\n");
-//     // #endif
+    res = do_one_mapping(newmm->pgd, USER_STACK_ENTRY - PAGE_SIZE, stack_entry, 0x0f);
+    if (res != 0) {
+        kernel_printf("runuserprog:mapping for stack segment failed!\n");
+        goto error_5;
+    }
+    // #ifdef VMA_DEBUG
+    // kernel_printf("Map stack done\n");
+    // #endif
 
-//     /*
-//     res = do_one_mapping(newmm->pgd, USER_HEAP_ENTRY, heap_entry, 0x0f);
-//     if (res != 0) {
-//         kernel_printf("runuserprog: mapping for heap segment failed!\n");
-//         goto error_5;
-//     }
-//     */
+    /*
+    res = do_one_mapping(newmm->pgd, USER_HEAP_ENTRY, heap_entry, 0x0f);
+    if (res != 0) {
+        kernel_printf("runuserprog: mapping for heap segment failed!\n");
+        goto error_5;
+    }
+    */
 
-//     oldmm = current_task->mm;
-//     current_task->mm = newmm;
+    oldmm = current_task->mm;
+    current_task->mm = newmm;
 
-//     activate_mm(current_task);
+    activate_mm(current_task);
 
-//     // init_pgtable();
-//     // #ifdef VMA_DEBUG
-//     // kernel_printf("after activate:%d  %s\n", current_task->pid, current_task->name);
-//     // #endif
+    // init_pgtable();
+    // #ifdef VMA_DEBUG
+    // kernel_printf("after activate:%d  %s\n", current_task->pid, current_task->name);
+    // #endif
  
-//    // if (oldmm != 0)
-//    //     mm_delete(oldmm);
+   // if (oldmm != 0)
+   //     mm_delete(oldmm);
     
-//     entry = USER_CODE_ENTRY;
-//     stackptr = USER_STACK_ENTRY - 32; //in case there is some special case
+    entry = USER_CODE_ENTRY;
+    stackptr = USER_STACK_ENTRY - 32; //in case there is some special case
 
-//     // nbuf = npage * ((PAGE_SIZE + 511) / 512);
-//     // for (i = 0; i < nbuf; i++) {
-//     //     fs_read(current_task->task_files, buf, 512);
-//     //     kernel_memcpy((void*)(entry + i * 512), buf, 512);
-//     //     kernel_memcpy((void*)(phy_entry + i * 512), buf, 512);
-//     // }
+    // nbuf = npage * ((PAGE_SIZE + 511) / 512);
+    // for (i = 0; i < nbuf; i++) {
+    //     fs_read(current_task->task_files, buf, 512);
+    //     kernel_memcpy((void*)(entry + i * 512), buf, 512);
+    //     kernel_memcpy((void*)(phy_entry + i * 512), buf, 512);
+    // }
     
-//     int CACHE_BLOCK_SIZE = 64;
-//     unsigned int n = file_size / CACHE_BLOCK_SIZE + 1;
-//     for (i = 0; i < n; i++) {
-//         // fs_read(current_task->task_files, buf, CACHE_BLOCK_SIZE);
-//         // kernel_memcpy((void*)(phy_entry + i * CACHE_BLOCK_SIZE), buf + i * CACHE_BLOCK_SIZE, CACHE_BLOCK_SIZE);
-//         // kernel_cache(phy_entry + i * CACHE_BLOCK_SIZE);
-//         kernel_memcpy((void*)(entry + i * CACHE_BLOCK_SIZE), buf + i * CACHE_BLOCK_SIZE, CACHE_BLOCK_SIZE);
-//         kernel_cache(entry + i * CACHE_BLOCK_SIZE);
-//     }
+    int CACHE_BLOCK_SIZE = 64;
+    unsigned int n = file_size / CACHE_BLOCK_SIZE + 1;
+    for (i = 0; i < n; i++) {
+        // fs_read(current_task->task_files, buf, CACHE_BLOCK_SIZE);
+        // kernel_memcpy((void*)(phy_entry + i * CACHE_BLOCK_SIZE), buf + i * CACHE_BLOCK_SIZE, CACHE_BLOCK_SIZE);
+        // kernel_cache(phy_entry + i * CACHE_BLOCK_SIZE);
+        kernel_memcpy((void*)(entry + i * CACHE_BLOCK_SIZE), buf + i * CACHE_BLOCK_SIZE, CACHE_BLOCK_SIZE);
+        kernel_cache(entry + i * CACHE_BLOCK_SIZE);
+    }
 
-//     kfree(buf);
+    kfree(buf);
 
-//    // fs_read(current_task->task_files, buf, 64);
-//    //     kernel_memcpy((void*)(entry + i * 512), buf, 512);
-//    // kernel_memcpy((void*)(phy_entry), buf, 64);
-//     //kernel_cache(phy_entry);
+   // fs_read(current_task->task_files, buf, 64);
+   //     kernel_memcpy((void*)(entry + i * 512), buf, 512);
+   // kernel_memcpy((void*)(phy_entry), buf, 64);
+    //kernel_cache(phy_entry);
      
  
-//     #ifdef TLB_DEBUG
+    #ifdef TLB_DEBUG
     
-//         kernel_printf("userspace-- %x  %x\n", entry, stackptr);
-//         kernel_printf("entry: %x\n", phy_entry);
-//         debug_addr = (unsigned int*)phy_entry;
-//         for (i = 0; i < 8; i++) {
-//             kernel_printf("%d: %x\n", i, *(debug_addr + i));
-//         }
+        kernel_printf("userspace-- %x  %x\n", entry, stackptr);
+        kernel_printf("entry: %x\n", phy_entry);
+        debug_addr = (unsigned int*)phy_entry;
+        for (i = 0; i < 8; i++) {
+            kernel_printf("%d: %x\n", i, *(debug_addr + i));
+        }
 
-//         // kernel_getchar();
-//         debug_addr = (unsigned int*)entry;
-//         kernel_printf("user:\n");
-//         for (i = 0; i < 8; i++) {
-//             debug_val = *(debug_addr + i);
-//             kernel_printf("%x: %x $$$$$  \n", (debug_addr + i), debug_val);
-//             // *(debug_addr + i) = i * i;
-//             // debug_val = *(debug_addr + i);
-//             // kernel_printf("%x: %x\n", (debug_addr + i), debug_val);
-//         }
+        // kernel_getchar();
+        debug_addr = (unsigned int*)entry;
+        kernel_printf("user:\n");
+        for (i = 0; i < 8; i++) {
+            debug_val = *(debug_addr + i);
+            kernel_printf("%x: %x $$$$$  \n", (debug_addr + i), debug_val);
+            // *(debug_addr + i) = i * i;
+            // debug_val = *(debug_addr + i);
+            // kernel_printf("%x: %x\n", (debug_addr + i), debug_val);
+        }
 
-//         // kernel_printf("entry again: %x\n", phy_entry);
-//         // debug_addr = (unsigned int*)phy_entry;
-//         // for (i = 0; i < 8; i++) {
-//         //     kernel_printf("%d: %x\n", i, *(debug_addr + i));
-//         // }
-//         // kernel_getchar();
-//         kernel_printf("count: %d\n", count_2);
+        // kernel_printf("entry again: %x\n", phy_entry);
+        // debug_addr = (unsigned int*)phy_entry;
+        // for (i = 0; i < 8; i++) {
+        //     kernel_printf("%d: %x\n", i, *(debug_addr + i));
+        // }
+        // kernel_getchar();
+        kernel_printf("count: %d\n", count_2);
   
-//     #endif
+    #endif
 
-//     // while(1)
-//     //     ;
+    // while(1)
+    //     ;
    
-//     // asm volatile(
-//     //     "move  $t0, %0\n\t"
-//     //     "jalr  $t0\n\t"
-//     //     :
-//     //     :"r" (entry+4)
-//     // );
-// //    disable_interrupts();
+    // asm volatile(
+    //     "move  $t0, %0\n\t"
+    //     "jalr  $t0\n\t"
+    //     :
+    //     :"r" (entry+4)
+    // );
+//    disable_interrupts();
     
-//     // int (*f)() = (int(*)())(entry);
-//     // res = f();
-//     // enable_interrupts();
+    // int (*f)() = (int(*)())(entry);
+    // res = f();
+    // enable_interrupts();
 
-//     enter_new_pc(entry, stackptr);
-//     asm volatile(
-//         "move   $sp, %0\n\t"
-//         "addiu  $sp, $sp, 4096\n\t"
-//         :
-//         :"r" (current_task)
-//     );
-//     kernel_printf("return from user program!\n");
+    enter_new_pc(entry, stackptr);
+    asm volatile(
+        "move   $sp, %0\n\t"
+        "addiu  $sp, $sp, 4096\n\t"
+        :
+        :"r" (current_task)
+    );
+    kernel_printf("return from user program!\n");
 
-//     // unsigned int* pgd = current_task->mm->pgd;
-//     // unsigned int pde, pte;
-//     // unsigned int* pde_ptr;
-//     // int j;
+    // unsigned int* pgd = current_task->mm->pgd;
+    // unsigned int pde, pte;
+    // unsigned int* pde_ptr;
+    // int j;
 
-//     // for (i = 0; i < 1024; i++) {
-//     //     pde = pgd[i];
-//     //     pde &= PAGE_MASK;
+    // for (i = 0; i < 1024; i++) {
+    //     pde = pgd[i];
+    //     pde &= PAGE_MASK;
        
-//     //     if (pde == 0)  //不存在二级页表
-//     //         continue;
-//     //     kernel_printf("pde: %x\n", pde);
-//     //     pde_ptr = (unsigned int*)pde;
-//     //     for (j = 0; j < 1024; j++) {
-//     //         pte = pde_ptr[j];
-//     //         pte &= PAGE_MASK;
-//     //         if (pte != 0) {
-//     //             kernel_printf("\tpte: %x\n", pte);
-//     //         }
-//     //     }
-//     // }
+    //     if (pde == 0)  //不存在二级页表
+    //         continue;
+    //     kernel_printf("pde: %x\n", pde);
+    //     pde_ptr = (unsigned int*)pde;
+    //     for (j = 0; j < 1024; j++) {
+    //         pte = pde_ptr[j];
+    //         pte &= PAGE_MASK;
+    //         if (pte != 0) {
+    //             kernel_printf("\tpte: %x\n", pte);
+    //         }
+    //     }
+    // }
 
-//     pc_exit(0);
+    pc_exit(0);
 
-// error_5:
-// /*
-//     kfree(heap_entry);
-// */
-// error_4:
-//     kfree((void*)stack_entry);
-// error_3:
-//     mm_delete(newmm);
-// error_2:
-//     // fs_close(current_task->task_files);
-// error_1:
-//     // kfree(current_task->task_files);
-//     // current_task->task_files = 0;
-// error_0:
+error_5:
+/*
+    kfree(heap_entry);
+*/
+error_4:
+    kfree((void*)stack_entry);
+error_3:
+    mm_delete(newmm);
+error_2:
+    // fs_close(current_task->task_files);
+error_1:
+    // kfree(current_task->task_files);
+    // current_task->task_files = 0;
+error_0:
     return 1;
 }

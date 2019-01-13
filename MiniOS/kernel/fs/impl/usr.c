@@ -12,8 +12,9 @@ extern struct cache                     * pcache;
 extern struct dentry                    * pwd_dentry;
 extern struct vfsmount                  * pwd_mnt;
 
-// 以下为Power shell 的接口
-// 输出文件的内容
+// for user interface
+// shell
+
 u32 vfs_cat(const u8 *path){
     u8 *buf;
     u32 err;
@@ -32,11 +33,9 @@ u32 vfs_cat(const u8 *path){
     // 接下来读取文件数据区的内容到buf
     base = 0;
     file_size = file->f_dentry->d_inode->i_size;
-    
     buf = (u8*) kmalloc (file_size + 1);
     if ( vfs_read(file, buf, file_size, &base) != file_size )
         return 1;
-
     // 打印buf里面的内容
     buf[file_size] = 0;
     kernel_printf("%s\n", buf);

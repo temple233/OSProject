@@ -26,7 +26,7 @@
 #define VFS_DEBUG
 
 #define FAT_DEBUG
-#define EXT2_DEBUG
+// #define EXT2_DEBUG
 // exec
 // #define EXEC_DEBUG
 

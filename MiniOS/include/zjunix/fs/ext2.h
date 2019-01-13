@@ -1,6 +1,10 @@
 #ifndef _ZJUNIX_FS_EXT_2_H
 #define _ZJUNIX_FS_EXT_2_H
 
+#ifndef EXT2_DEBUG
+#include <zjunix/fs/fat.h>
+#endif
+
 #include <zjunix/type.h>
 #include <zjunix/fs/fscache.h>
 
@@ -141,8 +145,9 @@ typedef struct ext2_file {
     unsigned long clock_head;
     /* For normal FAT32, cluster size is 4k */
     BUF_4K data_buf[LOCAL_DATA_BUF_NUM];
-} FILE_EXT2;
+} EXT2_FILE_STRUCT;
 
+#define FILE_EXT2 FILE
 
 unsigned long fs_find_ext2(FILE_EXT2 *file);
 

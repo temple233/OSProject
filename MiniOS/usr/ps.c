@@ -11,7 +11,9 @@
 #include <zjunix/time.h>
 #include <zjunix/utils.h>
 #include <driver/vga.h>
-#include "../usr/ls.h"
+
+#include <assert.h>
+
 #include "exec.h"
 #include "myvi.h"
  
@@ -26,6 +28,9 @@ extern u8 cwd_name_fat[64];
 // from impl.c
 extern struct master_boot_record *MBR;
 
+// for testMEM
+extern struct kmem_cache kmalloc_caches[PAGE_SHIFT];
+
 static inline unsigned int strlen(unsigned char *str)
 {
     unsigned int len = 0;
@@ -34,7 +39,21 @@ static inline unsigned int strlen(unsigned char *str)
     return len;
 }
 
-void test_proc() {
+static inline void parse2str(u8 *input, u8 *output1, u8 *output2)
+{
+    u32 inputLength = strlen(input);
+    u32 index = 0;
+    while(*input++ == ' ');
+    while((*output1++ = *input++) != ' ');
+    // single space
+    *output1 = '\000';
+    while((*output2++ = *input++) != ' ');
+
+    return;
+}
+
+void test_proc()
+{
     unsigned int timestamp;
     unsigned int currTime;
     unsigned int data;
@@ -49,12 +68,13 @@ void test_proc() {
     }
 }
 
-void testMem() {
+void testMem()
+{
     int i;
     int total = 100;
     //int sizeArr[200];
     int *addrArr[200];
-	int size = 100;
+    int size = 100;
     //for (i=0; i<total; i++) sizeArr[i] = 100;
     
     // for (i=10; i<100; i++) sizeArr[i] = 2<<12;
@@ -71,27 +91,41 @@ void testMem() {
     buddy_info();
 }
 
+
 void testMem2() {
-//     static int i;
-//     static int total = 10;
-//     static int sizeArr[200];
-//     static int *addrArr[200];
-//     for (i=0; i<total; i++) sizeArr[i] = 4096;
+    int i;
+    int total = 100;
+    //int sizeArr[200];
+    int *addrArr[200];
+    int size = 100;
+    //for (i=0; i<total; i++) sizeArr[i] = 100;
     
-//     // for (i=10; i<100; i++) sizeArr[i] = 2<<12;
-//     // for (i=100; i<total; i++) sizeArr[i] = 4<<12;
-//     for (i=0; i<total; i++) addrArr[i] = kmalloc(sizeArr[i]);
-//     kernel_printf("Allocate %d blocks sized %d byte\n", 20, 4096);
-//     // bootmap_info("bootmm");
-//     buddy_info();
-//     // kernel_getkey();
+    // for (i=10; i<100; i++) sizeArr[i] = 2<<12;
+    // for (i=100; i<total; i++) sizeArr[i] = 4<<12;
+    for (i=0; i<total; i++) addrArr[i] = kmalloc(size);
+    kernel_printf("Allocate %d blocks sized %d byte\n", total, size);
+    // bootmap_info("bootmm");
+    slab_info();
+    // kernel_getkey();
+   
     
-//     for (i=0; i<total; i++) kfree(addrArr[i]);
-//     kernel_printf("Deallocate\n");
-//     // bootmap_info("bootmm");
-//     buddy_info();
+    for (i=0; i<total; i++) kfree(addrArr[i]);
+    kernel_printf("Deallocate\n");
+    // bootmap_info("bootmm");
+    slab_info();
 }
 
+void testMem3() {
+      int i;
+
+    for (i = 0; i < PAGE_SHIFT; i++){ 
+        void *obj;
+        obj = slab_alloc(&(kmalloc_caches[i]));
+    
+        slab_free(&(kmalloc_caches[i]), obj);
+    }
+}
+ 
 void test_sync() {
     int i, j;
     lockup(&lk);
@@ -246,6 +280,9 @@ void parse_cmd() {
     } else if (kernel_strcmp(ps_buffer, "mminfo") == 0) {
         bootmap_info("bootmm");
         buddy_info();
+        
+    } else if(kernel_strcmp(ps_buffer, "mminfo2") == 0) {
+        slab_info();
     } else if (kernel_strcmp(ps_buffer, "mmtest") == 0) {
         kernel_printf("kmalloc : %x, size = 1KB\n", kmalloc(1024));
     } else if (kernel_strcmp(ps_buffer, "ps") == 0) {
@@ -273,12 +310,12 @@ void parse_cmd() {
     //     kernel_printf("proc return with %d\n", result);
     // } 
     else if (kernel_strcmp(ps_buffer, "vi") == 0) {
-        assert(strlen(ps_buffer), "file name is empty!");
+        assert(strlen(param) > 0, "file name is empty!");
 
         u8 param_buffer[64];
         if(param[0] != '/') {
             kernel_strcpy(param_buffer, cwd_name_fat);
-            kernel_strcpy(param_buffer, param);
+            kernel_strcpy(param_buffer + strlen(param_buffer), param);
         } else {
             kernel_strcpy(param_buffer, param);
         }
@@ -296,14 +333,23 @@ void parse_cmd() {
         testMem2();
         kernel_printf("Memory test2 return with 0\n");
     }
-    
-    else if (kernel_strcmp(ps_buffer, "execk") == 0) {
+    else if (kernel_strcmp(ps_buffer, "mt3") == 0) {
+        testMem3();
+        kernel_printf("Memory test3 return with 0\n");
+    }
+    else if (kernel_strcmp(ps_buffer, "exe") == 0) {
         //debug
-        kernel_printf("Enter execk\n");
+        kernel_printf("Create successfully\n");
         //debug
         result = exec_from_kernel(1, (void*)param, 0, 0);
         kernel_printf("execk return with %d\n", result);
-    } else if (kernel_strcmp(ps_buffer, "execk2") == 0) {
+    } else if (kernel_strcmp(ps_buffer, "wait") == 0) {
+        kernel_printf("wait for this process to finish\n");
+        result = exec_from_kernel(1, (void*)param, 1, 0);
+        kernel_printf("this process return with %d\n",result);
+    }
+
+    else if (kernel_strcmp(ps_buffer, "execk2") == 0) {
         result = exec_from_kernel(1, (void*)param, 1, 0);
         kernel_printf(ps_buffer, "execk2 return with %d\n");
     } else if (kernel_strcmp(ps_buffer, "vm") == 0) {
@@ -326,10 +372,18 @@ void parse_cmd() {
         result = sync_demo_create();
         kernel_printf("proc return with %d\n", result);
     } else if (kernel_strcmp(ps_buffer, "cat") == 0) {
+        assert(strlen(param) > 0, "file name is empty!");
+        u8 param_buffer[64];
+        if(param[0] != '/') {
+            kernel_strcpy(param_buffer, cwd_name_fat);
+            kernel_strcpy(param_buffer + strlen(param_buffer), param);
+        } else {
+            kernel_strcpy(param_buffer, param);
+        }
+        kernel_strcpy(param, param_buffer);
+       
         result = fs_cat_fat(param);
-    }
-    else if (kernel_strcmp(ps_buffer, "rm") == 0) {
-        result = fs_rm_fat(param);
+        kernel_printf("fat_cat exit with %d\n", result); 
     }
     else if (kernel_strcmp(ps_buffer, "ls") == 0) {
         result = fs_ls_fat(param);
@@ -338,8 +392,49 @@ void parse_cmd() {
         result = fs_cd_fat(param);
         kernel_printf("fat_cd exit with %d\n", result);
     } else if(kernel_strcmp(ps_buffer, "mkdir") == 0) {
+        /**
+         * e.g. mkdir /d1/d2
+         */
+        assert(strlen(param) > 0, "dir name is empty!");
+        u8 param_buffer[64];
+        if(param[0] != '/') {
+            kernel_strcpy(param_buffer, cwd_name_fat);
+            kernel_strcpy(param_buffer + strlen(param_buffer), param);
+        } else {
+            kernel_strcpy(param_buffer, param);
+        }
+        kernel_strcpy(param, param_buffer);
+
         result = fs_mkdir_fat(param);
         kernel_printf("fat_mkdir exit with %d\n", result);
+    } else if(kernel_strcmp(ps_buffer, "touch") == 0) {
+        assert(strlen(param) > 0, "file name is empty!");
+        u8 param_buffer[64];
+        if(param[0] != '/') {
+            kernel_strcpy(param_buffer, cwd_name_fat);
+            kernel_strcpy(param_buffer + strlen(param_buffer), param);
+        } else {
+            kernel_strcpy(param_buffer, param);
+        }
+        kernel_strcpy(param, param_buffer);
+
+        result = fs_create_fat(param);
+        kernel_printf("fat_create exit with %d\n", result);
+    } else if(!kernel_strcmp(ps_buffer, "rm")) {
+        if(strlen(param) <= 0) {
+            kernel_puts("rm without file name\n", VGA_WHITE, VGA_BLACK);
+        } else {
+            u8 param_buffer[64];
+            if(param[0] != '/') {
+                kernel_strcpy(param_buffer, cwd_name_fat);
+                kernel_strcpy(param_buffer + strlen(param_buffer), param);
+            } else {
+                kernel_strcpy(param_buffer, param);
+            }
+            kernel_strcpy(param, param_buffer);
+            result = fs_rm_fat(param);
+            kernel_printf("fat_rm exit with %d\n", result);
+        }
     }
     // some ext2 command
     else if(kernel_strcmp(ps_buffer, "ext2_dump") == 0){

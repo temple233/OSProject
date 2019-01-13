@@ -21,13 +21,8 @@
 #define  CNT_BASE   500
 
 //调度链表信息
-#define  SCHED_LV0   0  //forward process
-#define  SCHED_LV1   1
-#define  SCHED_LV2   2
-#define  SCHED_LV3   3
-#define  SCHED_LV_RANGE  3   
-#define  SCHED_LV_MAX  SCHED_LV_RANGE
-#define  SCHED_LV_MIN  1
+#define  FOREGROUND   0  //forward process
+#define  BACKGROUND  1
 
 
 //寄存器信息结构，主要用于进程调度时的进程切换
@@ -52,12 +47,14 @@ struct task_struct {
     int state;              //进程状态
 
     unsigned int time_cnt;  //进程所拥有的时间片
-    unsigned int sched_lv;  //用于多级反馈队列调度算法,当前为第几级队列   
+    unsigned int BG_FG;  //用于多级反馈队列调度算法,当前为第几级队列   
 
+    int priority;
     struct regs_context context;    //进程寄存器信息
     struct mm_struct *mm;           //进程地址空间结构指针
     FILE *task_files;               //进程打开文件指针
 
+    int test;
     struct list_head sched;         //用于进程调度
     struct list_head node;          //用于进程链表
 };
@@ -69,10 +66,11 @@ union task_union {
 
 
 typedef struct regs_context context;
+typedef struct regs_context mycontext;
 
-extern struct list_head tasks;
+extern struct list_head process;
 extern struct list_head sched;
-extern struct list_head sched_back[SCHED_LV_RANGE + 1];
+extern struct list_head sched_back;
 extern struct task_struct *current_task;
 
 void task_files_delete(struct task_struct* task);
@@ -82,22 +80,24 @@ void remove_exited(struct task_struct *task);
 
 
 void add_sched(struct task_struct *task);
-void add_sched_back(struct task_struct *task, int index);
+void add_sched_back(struct task_struct *task);
 void add_task(struct task_struct *task);
-void add_exited(struct task_struct *task);
+void add_exit(struct task_struct *task);
 
-struct task_struct* find_in_tasks(pid_t pid);
+
+struct task_struct* find_in_process(pid_t pid);
 struct task_struct* find_in_sched(pid_t pid);
 
 int task_create(char *task_name, void(*entry)(unsigned int argc, void *args), 
-                unsigned int argc, void *args, pid_t *retpid, int is_user);
+                unsigned int argc, void *args, pid_t *retpid, int user_process);
+
 int runprog(unsigned int argc, void *args);
 static void copy_context(context* src, context* dest);
-int exec_from_kernel(unsigned int argc, void *args, int is_wait, int is_user);
+int exec_from_kernel(unsigned int argc, void *args, int wait_process, int user_process);
 
 void init_pc();
 void init_pc_list();
-void pc_schedule(unsigned int status, unsigned int cause, context* pt_context);
+void schedule(unsigned int status, unsigned int cause, context* pt_context);
 int pc_kill(pid_t pid);
 
 void waitpid(pid_t pid);
@@ -112,8 +112,10 @@ int runuserprog(char* progname);
 int vmprog(unsigned int argc, void* args);
 extern void enter_new_pc(unsigned int entry, unsigned int stack);
 
+
 void pc_exit(int state);
 struct task_struct* find_next_task();
+struct task_struct* find_next_mytask();
 struct task_struct* find_in_sched_back();
 extern void switch_ex(struct regs_context* regs);
 extern void switch_wa(struct regs_context* des, struct regs_context* src);
